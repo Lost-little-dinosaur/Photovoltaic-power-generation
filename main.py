@@ -11,3 +11,5 @@ if __name__ == '__main__':
 
     roof.calculate_shadow()
     roof.paint_bool_array()
+
+    roof.getBestOption()  # 计算铺设光伏板的最佳方案

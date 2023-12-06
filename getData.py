@@ -1,6 +1,5 @@
-from math import *
 import pandas as pd
-import sympy as sp
+
 
 
 def convertStrDirectionToDegrees(direction):
@@ -72,41 +71,8 @@ def getDictFromExcel(excelPath):
     return resultDict
 
 
-filePath = 'E:\shadowcal\冬至日各纬度下1m长竖直线在地面上投影范围表.xlsx'
+filePath = 'static/冬至日各纬度下1m长竖直线在地面上投影范围表.xlsx'
 dataDict = getDictFromExcel(filePath)
-
-
-def getShadowEdgeNodes(edgeNode, edgeNodeHeight, roof):
-    returnList = []
-    # 检查纬度是否在字典中
-    if roof.latitude in dataDict:
-        for k, v in dataDict[roof.latitude].items():
-            # 获取阴影长度和方向
-            shadowLength, shadowDirection = v
-
-            # 转换平面倾斜方向为度数
-            roofDirectionDegree = convertStrDirectionToDegrees(roof.roofDirection)
-
-            # 计算阴影方向和平面倾斜方向之间的角度差
-            angleDiff = abs(shadowDirection - roofDirectionDegree) % 360
-            # 角度差超过180度时，取其补角
-            if angleDiff > 180:
-                angleDiff = 360 - angleDiff
-            if angleDiff < 90:
-                adjustedLength = edgeNodeHeight * shadowLength / (
-                        1 - shadowLength * tan(radians(roof.roofAngle)) * cos(radians(angleDiff))) * sqrt(
-                    tan(radians(angleDiff)) ** 2 * cos(radians(roof.roofAngle)) ** 2 + 1)
-            else:
-                angleDiff = 180 - angleDiff
-                adjustedLength = edgeNodeHeight * shadowLength / (
-                        1 + shadowLength * tan(radians(roof.roofAngle)) * cos(radians(angleDiff))) * sqrt(
-                    tan(radians(angleDiff)) ** 2 * cos(radians(roof.roofAngle)) ** 2 + 1)
-            returnList.append([round(edgeNode[0] + adjustedLength * cos(radians(shadowDirection))),
-                               round(edgeNode[1] + adjustedLength * sin(radians(shadowDirection)))])  # 暂时以四舍五入的方法取整
-    else:
-        if roof.latitude not in dataDict:
-            print("纬度 ", roof.latitude, " 不在字典中")
-    return returnList
 
 # 示例使用
 # if __name__ == '__main__':

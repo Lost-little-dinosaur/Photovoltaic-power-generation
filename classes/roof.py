@@ -103,5 +103,32 @@ class Roof:
                 for y1 in range(round(minY), round(maxY) + 1):
                     self.bool_array[x1][y1] = not isPointInsideConvexHull(hullPoints, x1, y1)
 
-    def getBestOption(self):
-        pass
+    def getBestOption(self, component_length, component_width):
+        component_length_units = round(component_length / UNIT)
+        component_width_units = round(component_width / UNIT)
+
+        max_count = 0  # 当前找到的最大部署数量
+        max_rects = []  # 当前找到的最大部署数量的矩形位置和大小
+
+        for i in range(self.length - component_length_units + 1):
+            for j in range(self.width - component_width_units + 1):
+                count = 0  # 当前位置的部署数量
+                for x in range(i, i + component_length_units):
+                    for y in range(j, j + component_width_units):
+                        if self.bool_array[x][y]:
+                            count += 1
+
+                if count > max_count:
+                    max_count = count
+                    max_rects = [((i, j), (i + component_length_units - 1, j + component_width_units - 1))]
+                elif count == max_count:
+                    max_rects.append(((i, j), (i + component_length_units - 1, j + component_width_units - 1)))
+
+        # 将最大部署数量的矩形位置设置为False
+        for rect in max_rects:
+            start, end = rect
+            for i in range(start[0], end[0] + 1):
+                for j in range(start[1], end[1] + 1):
+                    self.bool_array[i][j] = False
+
+        return max_rects

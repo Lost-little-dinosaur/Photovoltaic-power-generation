@@ -1,6 +1,6 @@
 import classes.obstacle
 import classes.roof
-import getData
+from const.const import components
 
 if __name__ == '__main__':
     # 示例参数
@@ -11,5 +11,5 @@ if __name__ == '__main__':
 
     roof.calculate_shadow()
     roof.paint_bool_array()
-    roof.getBestOption(1.134, 2.279)  # 计算铺设光伏板的最佳方案
+    roof.getBestOption(components[0])  # 计算铺设光伏板的最佳方案
     roof.paint_bool_array()

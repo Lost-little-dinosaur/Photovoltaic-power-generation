@@ -1,6 +1,6 @@
 import numpy as np
 
-from const.const import UNIT, INF
+from const.const import UNIT, INF, roofBoard
 from getData import dataDict, convertStrDirectionToDegrees
 from hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import *
@@ -34,8 +34,11 @@ class Roof:
         #         print(0 if self.bool_array[i][j] else 1, end=' ')
         #     print()
         from matplotlib import pyplot as plt
-        # 将布尔数组转换为黑白颜色（True为白色，False为黑色）
-        image = np.where(self.bool_array, 1, 0)
+        # 将bool_array的周围额外加上长度为5的边框（置为false）
+        tempArr = np.array(self.bool_array)
+        tempArr = np.pad(tempArr, ((roofBoard, roofBoard), (roofBoard, roofBoard)), 'constant', constant_values=False)
+
+        image = np.where(tempArr, 1, 0)  # 将bool_array中的True转换为白色，False转换为黑色
 
         # 显示图像
         plt.imshow(image, cmap='gray')
@@ -103,9 +106,9 @@ class Roof:
                 for y1 in range(round(minY), round(maxY) + 1):
                     self.bool_array[x1][y1] = not isPointInsideConvexHull(hullPoints, x1, y1)
 
-    def getBestOption(self, component_length, component_width):
-        component_length_units = round(component_length / UNIT)
-        component_width_units = round(component_width / UNIT)
+    def getBestOption(self, component):
+        component_length_units = round(component.length / UNIT)
+        component_width_units = round(component.width / UNIT)
 
         max_count = 0  # 当前找到的最大部署数量
         max_rects = []  # 当前找到的最大部署数量的矩形位置和大小

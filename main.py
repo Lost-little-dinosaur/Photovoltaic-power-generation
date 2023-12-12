@@ -13,3 +13,5 @@ if __name__ == '__main__':
     roof.paint_bool_array()
     print(roof.getBestOption(1.134, 2.279))  # 计算铺设光伏板的最佳方案
     roof.paint_bool_array()
+    roof.layoutPillars(0.2, 0.3)
+    roof.paint_bool_array()

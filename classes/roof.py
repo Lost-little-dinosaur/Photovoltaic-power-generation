@@ -138,3 +138,77 @@ class Roof:
                     max_rect = ((i, j), (i + component_length_units - 1, j + component_width_units - 1))
         return max_rect
 
+    def layoutPillars(self, east_west_span, north_south_span):
+        # 将东西跨距和南北跨距转换为以 UNIT 为单位的长度
+        east_west_span_units = round(east_west_span / UNIT)
+        north_south_span_units = round(north_south_span / UNIT)
+
+        max_spacing = round(2200 / UNIT)  # 最大间距
+        max_spacing_multiple = round(50 / UNIT)  # 间距取整的倍数
+
+        max_total_span = round(4000 / UNIT)  # 相邻跨距之和的最大值
+
+        # 初始化立柱坐标列表
+        pillar_coordinates = []
+
+        for i in range(self.length):
+            for j in range(self.width):
+                if self.bool_array[i][j]:
+                    # 检查当前位置是否可用
+                    # 检查南北跨距是否超出边界
+                    if i + north_south_span_units > self.length:
+                        continue
+
+                    # 检查东西跨距是否超出边界
+                    if j + east_west_span_units > self.width:
+                        continue
+
+                    # 检查当前位置及相邻位置之间的间距是否满足要求
+                    valid = True
+                    for x in range(i, i + north_south_span_units):
+                        for y in range(j, j + east_west_span_units):
+                            if not self.bool_array[x][y]:
+                                valid = False
+                                break
+                        if not valid:
+                            break
+
+                    if not valid:
+                        continue
+
+                    # 检查相邻东西跨距之和是否超过最大值
+                    if j > 0:
+                        total_span = east_west_span_units + 1
+                        if total_span > max_total_span:
+                            continue
+
+                    # 检查相邻东西跨距之和是否超过最大值
+                    if j + east_west_span_units < self.width - 1:
+                        total_span = east_west_span_units + 1
+                        if total_span > max_total_span:
+                            continue
+
+                    # 检查立柱之间的间距是否超过最大值
+                    if len(pillar_coordinates) > 0:
+                        last_x, last_y = pillar_coordinates[-1]
+                        spacing = abs(i - last_x) + abs(j - last_y)
+                        if spacing > max_spacing:
+                            continue
+
+                        # 检查立柱之间的间距是否为整数倍
+                        if spacing % max_spacing_multiple != 0:
+                            continue
+
+                    # 将当前位置及相邻位置置为不可用（False）
+                    for x in range(i, i + north_south_span_units):
+                        for y in range(j, j + east_west_span_units):
+                            self.bool_array[x][y] = False
+
+                    # 将当前立柱坐标添加到列表中
+                    pillar_coordinates.append((i, j))
+
+                    # 每个组件至少需要一个立柱
+                    return pillar_coordinates
+
+        return None  # 如果无法找到合适的位置布置立柱，则返回 None
+

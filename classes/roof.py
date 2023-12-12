@@ -102,7 +102,6 @@ class Roof:
             for x1 in range(round(minX), round(maxX) + 1):
                 for y1 in range(round(minY), round(maxY) + 1):
                     self.bool_array[x1][y1] = not isPointInsideConvexHull(hullPoints, x1, y1)
-
     def getBestOption(self, component_length, component_width):
         component_length_units = round(component_length / UNIT)
         component_width_units = round(component_width / UNIT)
@@ -138,3 +137,4 @@ class Roof:
                     max_count = count
                     max_rect = ((i, j), (i + component_length_units - 1, j + component_width_units - 1))
         return max_rect
+

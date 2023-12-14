@@ -10,6 +10,6 @@ if __name__ == '__main__':
     roof.add_obstacle(obstacle)
 
     roof.calculate_shadow()
-    roof.paint_bool_array()
+    # roof.paint_bool_array()
     roof.getBestOption(components[0])  # 计算铺设光伏板的最佳方案
     roof.paint_bool_array()

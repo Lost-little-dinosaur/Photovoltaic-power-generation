@@ -1,20 +1,29 @@
 import numpy as np
-
-from const.const import UNIT, INF
-from getData import dataDict, convertStrDirectionToDegrees
+import time
+import matplotlib.pyplot as plt
+from const.const import *
+from getData import dataDict
 from hullCalculation import getConvexHull, isPointInsideConvexHull
-from math import *
+from math import tan, radians, cos, sin, sqrt
 
 
 class Roof:
     def __init__(self, length, width, roofAngle, roofDirection, latitude):  # 输入的length和width是以米为单位的
+        time1 = time.time()
         self.length = round(length / UNIT)
         self.width = round(width / UNIT)
         self.roofAngle = roofAngle
         self.roofDirection = roofDirection
         self.latitude = latitude
         self.obstacles = []
-        self.bool_array = [[True] * self.width for _ in range(self.length)]
+        self.bool_array = np.full((self.length, self.width), True)
+        # 构造差分数组
+        # self.bool_array_diff = np.full((self.length, self.width), 0)
+        # self.bool_array_diff[0, 0] = 1
+        # 利用numpy快速构造前缀和数组
+        self.bool_array_sum = np.cumsum(np.cumsum(self.bool_array, axis=0), axis=1)
+        self.show_array = np.full((self.length, self.width), Empty)
+        print("屋顶初始化完成，耗时", time.time() - time1, "秒\n")
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
@@ -29,19 +38,15 @@ class Roof:
         return volume
 
     def paint_bool_array(self):
-        # for i in range(self.length):
-        #     for j in range(self.width):
-        #         print(0 if self.bool_array[i][j] else 1, end=' ')
-        #     print()
-        from matplotlib import pyplot as plt
-        # 将布尔数组转换为黑白颜色（True为白色，False为黑色）
-        image = np.where(self.bool_array, 1, 0)
-
-        # 显示图像
-        plt.imshow(image, cmap='gray')
-        plt.axis('off')  # 不显示坐标轴
+        time1 = time.time()
+        tempArr = np.pad(self.show_array, ((roofBoardLength, roofBoardLength), (roofBoardLength, roofBoardLength)),
+                         'constant',
+                         constant_values=RoofMargin)
+        rgb_array = np.array([[ColorDict[value] for value in row] for row in tempArr])
+        plt.imshow(rgb_array)
+        plt.axis('off')  # Turn off axis
         plt.show()
-        plt.show()
+        print("屋顶排布示意图绘制完成，耗时", time.time() - time1, "秒\n")
 
     def getShadowEdgeNodes(self, edgeNode, edgeNodeHeight):
         returnList = []
@@ -74,6 +79,8 @@ class Roof:
         return returnList
 
     def calculate_shadow(self):
+        time1 = time.time()
+        print("正在计算阴影，当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         for eachObstacle in self.obstacles:
             allEdgeNodes = []
             for i in range(len(eachObstacle.edges)):
@@ -82,12 +89,6 @@ class Roof:
 
             # 使用Graham扫描法找出allEdgeNodes的凸包
             hullPoints = getConvexHull(allEdgeNodes)
-            # # 画出这些点看看
-            # from matplotlib import pyplot as plt
-            # plt.scatter([i[0] for i in allEdgeNodes], [i[1] for i in allEdgeNodes])
-            # # 将凸包点标红
-            # plt.scatter([i[0] for i in hullPoints], [i[1] for i in hullPoints], c='r')
-            # plt.show()
             maxX, minX, maxY, minY = 0, INF, 0, INF
             for eachPoint in hullPoints:
                 maxX = max(maxX, eachPoint[0])
@@ -99,36 +100,88 @@ class Roof:
             maxX = min(self.length - 1, maxX)
             maxY = min(self.width - 1, maxY)
 
-            for x1 in range(round(minX), round(maxX) + 1):
+            for x1 in range(round(minX), round(maxX) + 1):  # todo: 时间太长了，需要优化！
                 for y1 in range(round(minY), round(maxY) + 1):
-                    self.bool_array[x1][y1] = not isPointInsideConvexHull(hullPoints, x1, y1)
+                    self.bool_array[x1, y1] = not isPointInsideConvexHull(hullPoints, x1, y1)
+                    # self.bool_array_diff[x1, y1] = int(self.bool_array[x1, y1]) - int(self.bool_array[x1, y1 - 1]) - \
+                    #                                int(self.bool_array[x1 - 1, y1]) + int(
+                    #     self.bool_array[x1 - 1, y1 - 1])  # 根据bool_array修改差分数组bool_array_diff
+                    self.show_array[x1, y1] = Empty if self.bool_array[x1, y1] else Shadow
+        # numpy优化
+        self.bool_array_sum = np.cumsum(np.cumsum(self.bool_array.astype(int), axis=0), axis=1)
+        print("阴影计算完成，耗时", time.time() - time1, "秒\n")
 
-    def getBestOption(self, component_length, component_width):
-        component_length_units = round(component_length / UNIT)
-        component_width_units = round(component_width / UNIT)
+    def getBestOption(self, component):
+        time1 = time.time()
+        print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        component_length_units = round(component.length / UNIT)
+        component_width_units = round(component.width / UNIT)
 
-        max_count = 0  # 当前找到的最大部署数量
-        max_rects = []  # 当前找到的最大部署数量的矩形位置和大小
+        max_count = 0
+        max_rects = []
 
-        for i in range(self.length - component_length_units + 1):
-            for j in range(self.width - component_width_units + 1):
-                count = 0  # 当前位置的部署数量
-                for x in range(i, i + component_length_units):
-                    for y in range(j, j + component_width_units):
-                        if self.bool_array[x][y]:
-                            count += 1
+        def updateMaxRects(mY, mX, Len, Wid, maxRects, maxCount):
+            new_rect = ((mY - Len + 1, mX - Wid + 1), (mY, mX))
 
-                if count > max_count:
-                    max_count = count
-                    max_rects = [((i, j), (i + component_length_units - 1, j + component_width_units - 1))]
-                elif count == max_count:
-                    max_rects.append(((i, j), (i + component_length_units - 1, j + component_width_units - 1)))
+            def overlaps(rect1, rect2):  # 可能有问题
+                (start1, end1), (start2, end2) = rect1, rect2
+                return not (end1[0] < start2[0] or end1[1] < start2[1] or end2[0] < start1[0] or end2[1] < start1[1])
 
-        # 将最大部署数量的矩形位置设置为False
+            if not any(overlaps(existing_rect, new_rect) for existing_rect in maxRects):
+                maxRects.append(new_rect)
+                maxCount += 1
+            return maxCount
+
+        def renewJ(y, x, maxRects):
+            for s, e in maxRects:
+                if s[0] <= y <= e[0] and s[1] <= x <= e[1]:
+                    return e[1] - x + 1
+            return 1
+
+        # 检查两种放置方式
+        for length, width in [(component_length_units, component_width_units),
+                              (component_width_units, component_length_units)]:  # todo: 反过来会怎么样？
+            i = length - 1
+            while i < self.length:
+                j = width - 1
+                while j < self.width:
+                    if self.canPlaceRectangle(i, j, length, width):
+                        max_count = updateMaxRects(i, j, length, width, max_rects, max_count)
+                        j += width - 1
+                    j += renewJ(i - length + 1, j - width + 1, max_rects)  # 快速更新j（非常重要！！！）
+                i += 1
         for rect in max_rects:
-            start, end = rect
-            for i in range(start[0], end[0] + 1):
-                for j in range(start[1], end[1] + 1):
-                    self.bool_array[i][j] = False
+            start, end = rect  # todo: 还需要考虑一下万一PhotovoltaicPanelBoardLength超过了start和end的范围的情况
+            self.show_array[start[0]:end[0] + 1,
+            start[1]:start[1] + PhotovoltaicPanelBoardLength] = PhotovoltaicPanelMargin
+            self.show_array[start[0]:end[0] + 1,
+            end[1] - PhotovoltaicPanelBoardLength + 1:end[1] + 1] = PhotovoltaicPanelMargin
+            self.show_array[start[0]:start[0] + PhotovoltaicPanelBoardLength,
+            start[1]:end[1] + 1] = PhotovoltaicPanelMargin
+            self.show_array[end[0] - PhotovoltaicPanelBoardLength + 1:end[0] + 1,
+            start[1]:end[1] + 1] = PhotovoltaicPanelMargin
+            self.show_array[start[0] + PhotovoltaicPanelBoardLength:end[0] - PhotovoltaicPanelBoardLength + 1,
+            start[1] + PhotovoltaicPanelBoardLength:end[1] - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanel
+            self.bool_array[start[0]:end[0] + 1, start[1]:end[1] + 1] = False  # todo: 可以用差分数组优化（其实感觉没必要了）
 
+        print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", max_count,
+              "块光伏板" + "，光伏组件规格为", component.specification, "，当前精度为", UNIT, "米\n")
         return max_rects
+
+    def canPlaceRectangle(self, i, j, length, width):
+        # 前缀和数组优化
+        if i > length - 1 and j > width - 1:
+            if self.bool_array_sum[i, j] - self.bool_array_sum[i - length, j] - self.bool_array_sum[i,
+                                                                                                    j - width] + \
+                    self.bool_array_sum[i - length, j - width] != length * width:
+                return False
+        elif i == length - 1 and j > width - 1:
+            if self.bool_array_sum[i, j] - self.bool_array_sum[i, j - width] != length * width:
+                return False
+        elif i > length - 1 and j == width - 1:
+            if self.bool_array_sum[i, j] - self.bool_array_sum[i - length, j] != length * width:
+                return False
+        else:
+            if self.bool_array_sum[i, j] != length * width:
+                return False
+        return True

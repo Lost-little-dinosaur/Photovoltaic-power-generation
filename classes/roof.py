@@ -17,13 +17,13 @@ class Roof:
         self.latitude = latitude
         self.obstacles = []
         self.bool_array = np.full((self.length, self.width), True)
-        self.maxrects_array = []
         # 构造差分数组
         # self.bool_array_diff = np.full((self.length, self.width), 0)
         # self.bool_array_diff[0, 0] = 1
         # 利用numpy快速构造前缀和数组
         self.bool_array_sum = np.cumsum(np.cumsum(self.bool_array, axis=0), axis=1)
         self.show_array = np.full((self.length, self.width), Empty)
+        self.maxrects_array = []
         print("屋顶初始化完成，耗时", time.time() - time1, "秒\n")
 
     def add_obstacle(self, obstacle):
@@ -127,21 +127,19 @@ class Roof:
 
             def overlaps(rect1, rect2):  # 可能有问题
                 (start1, end1), (start2, end2) = rect1, rect2
-                return not (end1[0] < start2[0] or end1[1] < start2[1] or end2[0] < start1[0] or end2[1] < start1[1])
-
+                return not (end1[0] < start2[0] or end1[1] < start2[1] or end2[0] < start1[0] or end2[1] < start1[
+                    1])
 
             if not any(overlaps(existing_rect, new_rect) for existing_rect in maxRects):
                 maxRects.append(new_rect)
                 maxCount += 1
             return maxCount
 
-
         def renewJ(y, x, maxRects):
             for s, e in maxRects:
                 if s[0] <= y <= e[0] and s[1] <= x <= e[1]:
                     return e[1] - x + 1
             return 1
-
 
         # 检查两种放置方式
         for length, width in [(component_length_units, component_width_units),
@@ -192,7 +190,6 @@ class Roof:
             if self.bool_array_sum[i, j] != length * width:
                 return False
         return True
-
     def remove_components_with_false_bool(self, component):
         component_length_units = round(component.length / UNIT)
         component_width_units = round(component.width / UNIT)
@@ -216,5 +213,6 @@ class Roof:
             start[1]:end[1] + 1] = PhotovoltaicPanelMargin
             self.show_array[start[0] + PhotovoltaicPanelBoardLength:end[0] - PhotovoltaicPanelBoardLength + 1,
             start[1] + PhotovoltaicPanelBoardLength:end[1] - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanel
+
 
 

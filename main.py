@@ -8,7 +8,7 @@ if __name__ == '__main__':
     obstacle = classes.obstacle.Obstacle([[1, 1], [2, 2], [2, 1], [1, 2]], [1, 1, 1, 1], "烟囱")  # 输入的单位是米
     roof.add_obstacle(obstacle)
     roof.getBestOption(components[0])  # 计算铺设光伏板的最佳方案
-    roof.calculate_shadow()
-    roof.remove_components_with_false_bool(components[0])
-    roof.paint_bool_array()
-
+    roof.calculateShadow()
+    roof.removeComponentsWithFalseFool()
+    roof.renewRects2Array()
+    roof.paintBoolArray()

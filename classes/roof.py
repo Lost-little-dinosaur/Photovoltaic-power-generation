@@ -1,3 +1,4 @@
+from PIL import Image
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -23,7 +24,7 @@ class Roof:
         # self.bool_array_diff[0, 0] = 1
         # 利用numpy快速构造前缀和数组
         self.boolArraySum = np.cumsum(np.cumsum(self.boolArray, axis=0), axis=1)
-        self.showArray = np.full((self.length, self.width), Empty)
+        self.showArray = np.full((self.length, self.width, 4), Empty)
         self.maxRects = []
         print("屋顶初始化完成，耗时", time.time() - time1, "秒\n")
 
@@ -39,15 +40,26 @@ class Roof:
         volume = area * height
         return volume
 
-    def paintBoolArray(self):
+    def paintBoolArray(self, lib):
         time1 = time.time()
-        tempArr = np.pad(self.showArray, ((roofBoardLength, roofBoardLength), (roofBoardLength, roofBoardLength)),
-                         'constant',
-                         constant_values=RoofMargin)
-        rgb_array = np.array([[ColorDict[value] for value in row] for row in tempArr])
-        plt.imshow(rgb_array)
-        plt.axis('off')  # Turn off axis
-        plt.show()
+        # 额外加上roofBoardLength的屋顶边缘（不要删，留着备用！！！）
+        # tempArr = np.pad(self.showArray, ((roofBoardLength, roofBoardLength), (roofBoardLength, roofBoardLength),
+        #                                   (0, 0)), 'constant', constant_values=RoofMargin)
+        # rgb_array = np.array([[ColorDict[value] for value in row] for row in tempArr])
+        height, width, channels = self.showArray.shape
+        tempArr = np.zeros((height + 2 * roofBoardLength, width + 2 * roofBoardLength, channels))
+        # 设置边界值
+        for i in range(channels):
+            tempArr[:, :, i] = RoofMargin[i]
+        # 填充中间区域
+        tempArr[roofBoardLength:-roofBoardLength, roofBoardLength:-roofBoardLength, :] = self.showArray
+        if lib == "plt":
+            plt.imshow(tempArr)
+            plt.axis('off')
+            plt.show()
+        elif lib == "img":
+            img = Image.fromarray((tempArr * 255).astype(np.uint8))
+            img.show()
         print("屋顶排布示意图绘制完成，耗时", time.time() - time1, "秒\n")
 
     def getShadowEdgeNodes(self, edgeNode, edgeNodeHeight):
@@ -141,8 +153,6 @@ class Roof:
                 max_count += 1
                 if now_y != mY and now_y != -INF:
                     now_row += 1
-                    if len(maxRects) >= 2 and maxRects[-2].row == now_row - 1:
-                        maxRects[-2].marginRight = 0  # 把最右边矩形的marginRight设为0
                 return max_count, now_row, mY, True
             else:
                 return max_count, now_row, now_y, False
@@ -152,7 +162,7 @@ class Roof:
                                 round(PhotovoltaicPanelCrossMargin / UNIT),
                                 round(PhotovoltaicPanelVerticalMargin / UNIT))
 
-            def overlaps(rect1, rect2):  # todo: 暂时不在showArray中体现横竖光伏板之间的间距差，只要在boolArray中体现就行了
+            def overlaps(rect1, rect2):
                 if rect1.direction != rect2.direction:
                     return not (
                             rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom +
@@ -171,18 +181,6 @@ class Roof:
                 if now_y != mY and now_y != -INF:
                     now_row += 1
                 return max_count, now_row, mY, True
-            # f = False
-            # for existingRect in maxRects:
-            #     if overlaps(existingRect, newRect):
-            #         f = True
-            #         break
-            # if not f:
-            #     maxRects.append(newRect)
-            #     max_count += 1
-            #     if now_y != mY and now_y != -INF:
-            #         now_row += 1
-            #         if len(maxRects) >= 2 and maxRects[-2].row == now_row - 1:
-            #             maxRects[-2].marginRight = 0
             else:
                 return max_count, now_row, now_y, False
 
@@ -207,24 +205,15 @@ class Roof:
                         j += width - 2 + round(PhotovoltaicPanelCrossMargin / UNIT)
                 j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
             if not addFlag:
-                i += 1  # todo: 快速更新i（非常重要！！！）
+                i += 1
             else:
                 i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
                 addFlag = False
-        # 还要把最后加的一排的光伏板下边距更新为0
-        # if len(self.maxRects) >= 1:
-        #     lastRow = self.maxRects[-1].row
-        #     k = -1
-        #     while self.maxRects[k].row == lastRow:
-        #         self.maxRects[k].marginBottom = 0
-        #         k -= 1
         # 再检查横排放置方式（只能放一行）
         addFlag = False
         direction, length, width = 2, component_width_units, component_length_units
         i, nowRow, nowY = length - 1, 1, -INF
         while i < self.length:
-            if i == 1485:
-                print("debug")
             j = width - 1
             while j < self.width:
                 if self.canPlaceRectangle(i, j, length, width):
@@ -239,18 +228,10 @@ class Roof:
             if nowRow == 2:  # 只能放一行横排
                 break
             if not addFlag:
-                i += 1  # todo: 快速更新i（非常重要！！！）
+                i += 1
             else:
                 i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
                 addFlag = False
-
-        # if len(self.maxRects) >= 1:
-        #     self.maxRects[-1].marginRight = 0  # 把最右边矩形的marginRight设为0
-        #     lastRow = self.maxRects[-1].row
-        #     k = -1
-        #     while self.maxRects[k].row == lastRow:
-        #         self.maxRects[k].marginBottom = 0
-        #         k -= 1
 
         print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount,
               "块光伏板" + "，光伏组件规格为", component.specification, "，当前精度为", UNIT, "米\n")
@@ -281,29 +262,62 @@ class Roof:
             if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
                 updated_rects.append(rect)
         self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
-        print("已移除所有位置中被阴影遮挡的组件，一共还有", len(self.maxRects), "个组件，耗时", time.time() - time1,
-              "秒\n")
 
     def renewRects2Array(self):
         time1 = time.time()
-        for rect in self.maxRects:  # todo: 还需要考虑一下万一PhotovoltaicPanelBoardLength超过了start和end的范围的情况
-            self.showArray[rect.startY:rect.endY + 1,
-            rect.startX:rect.startX + PhotovoltaicPanelBoardLength] = PhotovoltaicPanelBorder
-            self.showArray[rect.startY:rect.endY + 1,
-            rect.endX - PhotovoltaicPanelBoardLength + 1:rect.endX + 1] = PhotovoltaicPanelBorder
-            self.showArray[rect.startY:rect.startY + PhotovoltaicPanelBoardLength,
-            rect.startX:rect.endX + 1] = PhotovoltaicPanelBorder
-            self.showArray[rect.endY - PhotovoltaicPanelBoardLength + 1:rect.endY + 1,
-            rect.startX:rect.endX + 1] = PhotovoltaicPanelBorder
-            self.showArray[rect.startY + PhotovoltaicPanelBoardLength:rect.endY - PhotovoltaicPanelBoardLength + 1,
-            rect.startX + PhotovoltaicPanelBoardLength:rect.endX - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanel
+        for rect1 in self.maxRects:  # todo: 还需要考虑一下万一PhotovoltaicPanelBoardLength超过了start和end的范围的情况
+            self.boolArray[rect1.startY:rect1.endY + 1, rect1.startX:rect1.endX + 1] = False
 
-            self.showArray[rect.endY + 1:rect.endY + rect.marginBottom + 1,
-            rect.startX:rect.endX + rect.marginRight + 1] = PhotovoltaicPanelMargin
-            self.showArray[rect.startY:rect.endY + 1,
-            rect.endX + 1:rect.endX + rect.marginRight + 1] = PhotovoltaicPanelMargin
+        for rect1 in self.maxRects:
+            # 修边
+            if rect1.direction == 1:
+                for rect2 in self.maxRects:
+                    if rect2.direction == 2:
+                        # 如果rect1下方+round(PhotovoltaicPanelVerticalDiffMargin / UNIT)+1的位置有rect2，那么rect1的下边距就要加上这个间距
+                        tempY = rect1.endY + rect1.marginBottom + round(
+                            PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
+                        for tempX in range(rect1.startX, rect1.endX + 1):
+                            if rect2.startX <= tempX <= rect2.endX and rect2.startY <= tempY <= rect2.endY:
+                                rect1.marginBottom += round(PhotovoltaicPanelVerticalDiffMargin / UNIT)
+                                break
+            else:
+                for rect2 in self.maxRects:
+                    if rect2.direction == 1:
+                        # 如果rect1下方+round(PhotovoltaicPanelVerticalDiffMargin / UNIT)+1的位置有rect2，那么rect1的下边距就要加上这个间距
+                        tempY = rect1.endY + rect1.marginBottom + round(
+                            PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
+                        for tempX in range(rect1.startX, rect1.endX + 1):
+                            if rect2.startX <= tempX <= rect2.endX and rect2.startY <= tempY <= rect2.endY:
+                                rect1.marginBottom += round(PhotovoltaicPanelVerticalDiffMargin / UNIT)
+                                break
 
-            self.boolArray[rect.startY:rect.endY + rect.marginBottom + 1,
-            rect.startX:rect.endX + rect.marginRight + 1] = False
+            if rect1.marginRight + rect1.endX + 1 < self.width and np.sum(
+                    self.boolArray[rect1.startY:rect1.endY + 1, rect1.endX + rect1.marginRight + 1:
+                    rect1.endX + rect1.marginRight + 2]) == rect1.endY - rect1.startY + 1:
+                rect1.marginRight = 0
+            if rect1.marginBottom + rect1.endY + 1 < self.length and np.sum(
+                    self.boolArray[rect1.endY + rect1.marginBottom + 1:rect1.endY + rect1.marginBottom + 2,
+                    rect1.startX:rect1.endX + 1]) == rect1.endX - rect1.startX + 1:
+                rect1.marginBottom = 0
+
+            self.showArray[rect1.startY:rect1.endY + 1,
+            rect1.startX:rect1.startX + PhotovoltaicPanelBoardLength] = PhotovoltaicPanelBorder
+            self.showArray[rect1.startY:rect1.endY + 1,
+            rect1.endX - PhotovoltaicPanelBoardLength + 1:rect1.endX + 1] = PhotovoltaicPanelBorder
+            self.showArray[rect1.startY:rect1.startY + PhotovoltaicPanelBoardLength,
+            rect1.startX + PhotovoltaicPanelBoardLength:rect1.endX - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanelBorder
+            self.showArray[rect1.endY - PhotovoltaicPanelBoardLength + 1:rect1.endY + 1,
+            rect1.startX + PhotovoltaicPanelBoardLength:rect1.endX - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanelBorder
+            self.showArray[rect1.startY + PhotovoltaicPanelBoardLength:rect1.endY - PhotovoltaicPanelBoardLength + 1,
+            rect1.startX + PhotovoltaicPanelBoardLength:rect1.endX - PhotovoltaicPanelBoardLength + 1] = PhotovoltaicPanel
+
+            self.showArray[rect1.endY + 1:rect1.endY + rect1.marginBottom + 1,
+            rect1.startX:rect1.endX + rect1.marginRight + 1] = PhotovoltaicPanelMargin
+            self.showArray[rect1.startY:rect1.endY + 1,
+            rect1.endX + 1:rect1.endX + rect1.marginRight + 1] = PhotovoltaicPanelMargin
+
+            # 再次更新bool_array
+            self.boolArray[rect1.startY:rect1.endY + rect1.marginBottom + 1,
+            rect1.startX:rect1.endX + rect1.marginRight + 1] = False
 
         print("已更新show_array和bool_array，耗时", time.time() - time1, "秒\n")

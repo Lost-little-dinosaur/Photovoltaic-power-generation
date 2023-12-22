@@ -7,7 +7,7 @@ from getData import dataDict
 from hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import tan, radians, cos, sin, sqrt
 from classes.rectangle import Rectangle
-
+from classes.Arrangement import Arrangement
 
 class Roof:
     def __init__(self, length, width, roofAngle, roofDirection, latitude):  # 输入的length和width是以米为单位的
@@ -321,3 +321,8 @@ class Roof:
             rect1.startX:rect1.endX + rect1.marginRight + 1] = False
 
         print("已更新show_array和bool_array，耗时", time.time() - time1, "秒\n")
+
+
+
+
+

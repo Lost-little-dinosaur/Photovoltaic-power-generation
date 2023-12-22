@@ -6,8 +6,8 @@ from const.const import *
 from getData import dataDict
 from hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import tan, radians, cos, sin, sqrt
-from classes.rectangle import Rectangle
-from classes.Arrangement import Arrangement
+from classes.component import Component
+
 
 class Roof:
     def __init__(self, length, width, roofAngle, roofDirection, latitude):  # 输入的length和width是以米为单位的
@@ -28,17 +28,8 @@ class Roof:
         self.maxRects = []
         print("屋顶初始化完成，耗时", time.time() - time1, "秒\n")
 
-    def add_obstacle(self, obstacle):
+    def addObstacle(self, obstacle):
         self.obstacles.append(obstacle)
-
-    def calculate_area(self):
-        area = self.length * self.width
-        return area
-
-    def calculate_volume(self, height):
-        area = self.calculate_area()
-        volume = area * height
-        return volume
 
     def paintBoolArray(self, lib):
         time1 = time.time()
@@ -126,57 +117,22 @@ class Roof:
         self.boolArraySum = np.cumsum(np.cumsum(self.boolArray.astype(int), axis=0), axis=1)
         print("阴影计算完成，耗时", time.time() - time1, "秒\n")
 
-    def getBestOption(self, component):
+    def getBestOption(self, arrangements):
         time1 = time.time()
         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        component_length_units = round(component.length / UNIT)
-        component_width_units = round(component.width / UNIT)
-        if component_length_units < component_width_units:  # 确保length大于width
-            component_length_units, component_width_units = component_width_units, component_length_units
 
-        maxCount = 0
-        self.maxRects = []
-
-        def updateMaxRects1(mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
-            newRect = Rectangle(mY - Len + 1, mX - Wid + 1, mY, mX, direct, now_row,
-                                round(PhotovoltaicPanelCrossMargin / UNIT),
-                                round(PhotovoltaicPanelVerticalMargin / UNIT))
+        def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
+            newRect = Component("tmp", INF, INF, INF, INF, INF, INF, mY - Len + 1, mX - Wid + 1, mY, mX, direct,
+                                now_row, round(PhotovoltaicPanelCrossMargin / UNIT),
+                                round(PhotovoltaicPanelVerticalMargin / UNIT))  # 先假装是一个组件，方便排布
 
             def overlaps(rect1, rect2):
                 return not (
-                        rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom <
-                        rect2.startY or rect2.endX + rect2.marginRight < rect1.startX or rect2.endY +
-                        rect2.marginBottom < rect1.startY)
+                            rect1.endX < rect2.startX or rect1.endY < rect2.startY or rect2.endX < rect1.startX or rect2.endY < rect1.startY)
 
             if not any(overlaps(existing_rect, newRect) for existing_rect in maxRects):
-                maxRects.append(newRect)
-                max_count += 1
-                if now_y != mY and now_y != -INF:
-                    now_row += 1
-                return max_count, now_row, mY, True
-            else:
-                return max_count, now_row, now_y, False
-
-        def updateMaxRects2(mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
-            newRect = Rectangle(mY - Len + 1, mX - Wid + 1, mY, mX, direct, now_row,
-                                round(PhotovoltaicPanelCrossMargin / UNIT),
-                                round(PhotovoltaicPanelVerticalMargin / UNIT))
-
-            def overlaps(rect1, rect2):
-                if rect1.direction != rect2.direction:
-                    return not (
-                            rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom +
-                            round(PhotovoltaicPanelVerticalDiffMargin / UNIT) < rect2.startY or rect2.endX + rect2.
-                            marginRight < rect1.startX or rect2.endY + rect2.marginBottom +
-                            round(PhotovoltaicPanelVerticalDiffMargin / UNIT) < rect1.startY)
-                else:
-                    return not (
-                            rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom <
-                            rect2.startY or rect2.endX + rect2.marginRight < rect1.startX or rect2.endY +
-                            rect2.marginBottom < rect1.startY)
-
-            if not any(overlaps(existingRect, newRect) for existingRect in maxRects):
-                maxRects.append(newRect)
+                arrange.calculateComponentArray(newRect.startX, newRect.startY)
+                maxRects.extend(arrange.componentArray)
                 max_count += 1
                 if now_y != mY and now_y != -INF:
                     now_row += 1
@@ -190,51 +146,32 @@ class Roof:
                     return r.endX - x + 1
             return 1
 
-        # 先检查竖排放置方式
-        addFlag = False
-        direction, length, width = 1, component_length_units, component_width_units
-        i, nowRow, nowY = length - 1, 1, -INF
-        while i < self.length:
-            j = width - 1
-            while j < self.width:
-                if self.canPlaceRectangle(i, j, length, width):
-                    maxCount, nowRow, nowY, addFlag = updateMaxRects1(i, j, length, width, self.maxRects, maxCount,
-                                                                      nowRow, nowY, direction)
-                    # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
-                    if addFlag:
-                        j += width - 2 + round(PhotovoltaicPanelCrossMargin / UNIT)
-                j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
-            if not addFlag:
+        # 先对arrangements按不同关键字排序，verticalCount从大到小，crossCount从大到小
+        arrangements.sort(key=lambda x: (x.verticalCount, x.crossCount), reverse=True)
+        maxCount = 0
+        self.maxRects = []
+        for arrangement in arrangements:
+            component_length_units = round(arrangement.length / UNIT)
+            component_width_units = round(arrangement.width / UNIT)
+            # if component_length_units < component_width_units:  # 确保length大于width（不需要额外判断了）
+            #     component_length_units, component_width_units = component_width_units, component_length_units
+            direction, length, width = 1, component_length_units, component_width_units
+            i, nowRow, nowY = length - 1, 1, -INF
+            while i < self.length:
+                j = width - 1
+                while j < self.width:
+                    if self.canPlaceRectangle(i, j, length, width):
+                        maxCount, nowRow, nowY, addFlag = updateMaxRects(arrangement, i, j, length, width,
+                                                                         self.maxRects, maxCount, nowRow, nowY,
+                                                                         direction)
+                        # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
+                        if addFlag:
+                            j += width - 2
+                    j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
                 i += 1
-            else:
-                i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
-                addFlag = False
-        # 再检查横排放置方式（只能放一行）
-        addFlag = False
-        direction, length, width = 2, component_width_units, component_length_units
-        i, nowRow, nowY = length - 1, 1, -INF
-        while i < self.length:
-            j = width - 1
-            while j < self.width:
-                if self.canPlaceRectangle(i, j, length, width):
-                    maxCount, nowRow, nowY, addFlag = updateMaxRects2(i, j, length, width, self.maxRects, maxCount,
-                                                                      nowRow, nowY, direction)
-                    if nowRow == 2:  # 只能放一行横排
-                        break
-                    # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
-                    if addFlag:
-                        j += width - 2 + round(PhotovoltaicPanelCrossMargin / UNIT)
-                j += renewJ(i - length + 1, j - width + 1, self.maxRects)
-            if nowRow == 2:  # 只能放一行横排
-                break
-            if not addFlag:
-                i += 1
-            else:
-                i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
-                addFlag = False
 
-        print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount,
-              "块光伏板" + "，光伏组件规格为", component.specification, "，当前精度为", UNIT, "米\n")
+        print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount, "块光伏板" + "，当前精度为",
+              UNIT, "米\n")
         return self.maxRects
 
     def canPlaceRectangle(self, i, j, length, width):
@@ -274,8 +211,7 @@ class Roof:
                 for rect2 in self.maxRects:
                     if rect2.direction == 2:
                         # 如果rect1下方+round(PhotovoltaicPanelVerticalDiffMargin / UNIT)+1的位置有rect2，那么rect1的下边距就要加上这个间距
-                        tempY = rect1.endY + rect1.marginBottom + round(
-                            PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
+                        tempY = rect1.endY + rect1.marginBottom + round(PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
                         for tempX in range(rect1.startX, rect1.endX + 1):
                             if rect2.startX <= tempX <= rect2.endX and rect2.startY <= tempY <= rect2.endY:
                                 rect1.marginBottom += round(PhotovoltaicPanelVerticalDiffMargin / UNIT)
@@ -284,8 +220,7 @@ class Roof:
                 for rect2 in self.maxRects:
                     if rect2.direction == 1:
                         # 如果rect1下方+round(PhotovoltaicPanelVerticalDiffMargin / UNIT)+1的位置有rect2，那么rect1的下边距就要加上这个间距
-                        tempY = rect1.endY + rect1.marginBottom + round(
-                            PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
+                        tempY = rect1.endY + rect1.marginBottom + round(PhotovoltaicPanelVerticalDiffMargin / UNIT) + 1
                         for tempX in range(rect1.startX, rect1.endX + 1):
                             if rect2.startX <= tempX <= rect2.endX and rect2.startY <= tempY <= rect2.endY:
                                 rect1.marginBottom += round(PhotovoltaicPanelVerticalDiffMargin / UNIT)
@@ -322,7 +257,114 @@ class Roof:
 
         print("已更新show_array和bool_array，耗时", time.time() - time1, "秒\n")
 
-
-
-
-
+# 单个组件的排布函数（留着备用！！！）
+#     def getBestOption(self, component):
+#         time1 = time.time()
+#         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+#         component_length_units = round(component.length / UNIT)
+#         component_width_units = round(component.width / UNIT)
+#         if component_length_units < component_width_units:  # 确保length大于width
+#             component_length_units, component_width_units = component_width_units, component_length_units
+#
+#         maxCount = 0
+#         self.maxRects = []
+#
+#         def updateMaxRects1(mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
+#             newRect = Rectangle(mY - Len + 1, mX - Wid + 1, mY, mX, direct, now_row,
+#                                 round(PhotovoltaicPanelCrossMargin / UNIT),
+#                                 round(PhotovoltaicPanelVerticalMargin / UNIT))
+#
+#             def overlaps(rect1, rect2):
+#                 return not (
+#                         rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom <
+#                         rect2.startY or rect2.endX + rect2.marginRight < rect1.startX or rect2.endY +
+#                         rect2.marginBottom < rect1.startY)
+#
+#             if not any(overlaps(existing_rect, newRect) for existing_rect in maxRects):
+#                 maxRects.append(newRect)
+#                 max_count += 1
+#                 if now_y != mY and now_y != -INF:
+#                     now_row += 1
+#                 return max_count, now_row, mY, True
+#             else:
+#                 return max_count, now_row, now_y, False
+#
+#         def updateMaxRects2(mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
+#             newRect = Rectangle(mY - Len + 1, mX - Wid + 1, mY, mX, direct, now_row,
+#                                 round(PhotovoltaicPanelCrossMargin / UNIT),
+#                                 round(PhotovoltaicPanelVerticalMargin / UNIT))
+#
+#             def overlaps(rect1, rect2):
+#                 if rect1.direction != rect2.direction:
+#                     return not (
+#                             rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom +
+#                             round(PhotovoltaicPanelVerticalDiffMargin / UNIT) < rect2.startY or rect2.endX + rect2.
+#                             marginRight < rect1.startX or rect2.endY + rect2.marginBottom +
+#                             round(PhotovoltaicPanelVerticalDiffMargin / UNIT) < rect1.startY)
+#                 else:
+#                     return not (
+#                             rect1.endX + rect1.marginRight < rect2.startX or rect1.endY + rect1.marginBottom <
+#                             rect2.startY or rect2.endX + rect2.marginRight < rect1.startX or rect2.endY +
+#                             rect2.marginBottom < rect1.startY)
+#
+#             if not any(overlaps(existingRect, newRect) for existingRect in maxRects):
+#                 maxRects.append(newRect)
+#                 max_count += 1
+#                 if now_y != mY and now_y != -INF:
+#                     now_row += 1
+#                 return max_count, now_row, mY, True
+#             else:
+#                 return max_count, now_row, now_y, False
+#
+#         def renewJ(y, x, maxRects):
+#             for r in maxRects:
+#                 if r.startY <= y <= r.endY and r.startX <= x <= r.endX:
+#                     return r.endX - x + 1
+#             return 1
+#
+#         # 先检查竖排放置方式
+#         addFlag = False
+#         direction, length, width = 1, component_length_units, component_width_units
+#         i, nowRow, nowY = length - 1, 1, -INF
+#         while i < self.length:
+#             j = width - 1
+#             while j < self.width:
+#                 if self.canPlaceRectangle(i, j, length, width):
+#                     maxCount, nowRow, nowY, addFlag = updateMaxRects1(i, j, length, width, self.maxRects, maxCount,
+#                                                                       nowRow, nowY, direction)
+#                     # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
+#                     if addFlag:
+#                         j += width - 2 + round(PhotovoltaicPanelCrossMargin / UNIT)
+#                 j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
+#             if not addFlag:
+#                 i += 1
+#             else:
+#                 i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
+#                 addFlag = False
+#         # 再检查横排放置方式（只能放一行）
+#         addFlag = False
+#         direction, length, width = 2, component_width_units, component_length_units
+#         i, nowRow, nowY = length - 1, 1, -INF
+#         while i < self.length:
+#             j = width - 1
+#             while j < self.width:
+#                 if self.canPlaceRectangle(i, j, length, width):
+#                     maxCount, nowRow, nowY, addFlag = updateMaxRects2(i, j, length, width, self.maxRects, maxCount,
+#                                                                       nowRow, nowY, direction)
+#                     if nowRow == 2:  # 只能放一行横排
+#                         break
+#                     # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
+#                     if addFlag:
+#                         j += width - 2 + round(PhotovoltaicPanelCrossMargin / UNIT)
+#                 j += renewJ(i - length + 1, j - width + 1, self.maxRects)
+#             if nowRow == 2:  # 只能放一行横排
+#                 break
+#             if not addFlag:
+#                 i += 1
+#             else:
+#                 i += round(PhotovoltaicPanelVerticalMargin / UNIT) + 1
+#                 addFlag = False
+#
+#         print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount,
+#               "块光伏板" + "，光伏组件规格为", component.specification, "，当前精度为", UNIT, "米\n")
+#         return self.maxRects

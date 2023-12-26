@@ -28,5 +28,5 @@ PhotovoltaicPanelBorder = (0.0, 0.0, 0.0, 1.0)  # 光伏板边框
 
 # 光伏板横竖排之间的间距
 PhotovoltaicPanelCrossMargin = 0.006  # 以米为单位
-PhotovoltaicPanelVerticalDiffMargin = 0.012 - 0.006  # 以米为单位
 PhotovoltaicPanelVerticalMargin = 0.006  # 以米为单位
+PhotovoltaicPanelVerticalDiffMargin = 0.012 - PhotovoltaicPanelVerticalMargin  # 以米为单位

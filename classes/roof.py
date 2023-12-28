@@ -124,7 +124,7 @@ class Roof:
         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
         def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_y, direct):  # 用于竖排放置方式的更新
-            newRect = Component("tmp", INF, INF, INF, INF, INF, INF, mY - Len + 1, mX - Wid + 1, mY, mX, direct,
+            newRect = Component("tmp", INF, INF, INF, INF, INF, INF, mX - Wid + 1, mY - Len + 1, mX, mY, direct,
                                 round(PhotovoltaicPanelCrossMargin / UNIT),
                                 round(PhotovoltaicPanelVerticalMargin / UNIT))  # 先假装是一个组件，方便排布
 
@@ -153,6 +153,8 @@ class Roof:
         for k in range(len(arrangements)):
             print("正在计算第", k + 1, "/", len(arrangements), "个组件的最佳方案，当前时间为",
                   time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            # if k == 29:
+            #     break
             component_length_units = round(arrangements[k].length / UNIT)
             component_width_units = round(arrangements[k].width / UNIT)
             # if component_length_units < component_width_units:  # 确保length大于width（不需要额外判断了）
@@ -207,7 +209,8 @@ class Roof:
         for rect1 in self.maxRects:  # todo: 还需要考虑一下万一PhotovoltaicPanelBoardLength超过了start和end的范围的情况
             self.boolArray[rect1.startY:rect1.endY + 1, rect1.startX:rect1.endX + 1] = False
             # 修边
-            rect1.marginRight, rect1.marginBottom, = PhotovoltaicPanelCrossMargin, PhotovoltaicPanelVerticalMargin
+            rect1.marginRight, rect1.marginBottom, = round(PhotovoltaicPanelCrossMargin / UNIT), round(
+                PhotovoltaicPanelVerticalMargin / UNIT)
 
         for rect1 in self.maxRects:
             # 修边

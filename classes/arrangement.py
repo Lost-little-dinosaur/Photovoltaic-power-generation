@@ -41,79 +41,95 @@ class Arrangement:
 
     def calculateComponentArray(self, startX, startY):
         # 通过输入的startX, startY和Arrangement本就有的信息计算出组件的排布坐标，添加到self.componentArray里
-        if self.verticalCount == 0: # 只有横排布（横一）
+        if self.verticalCount == 0:  # 只有横排布（横一）
             for i in range(self.crossNum):
-                cp = self.component, cp.startX = startX, cp.startY = startY
+                cp = self.component
+                cp.startX = startX
+                cp.startY = startY
                 cp.direction = 2
                 cp.row = 1
-                cp.endX = round((startX + self.component.length) / UNIT)
-                cp.endY = round((startY + self.component.width) / UNIT)
+                cp.endX = startX + round((self.component.length) / UNIT)
+                cp.endY = startY + round((self.component.width) / UNIT)
                 self.componentArray.append(cp)
                 startX += round((self.component.width + 0.006) / UNIT)
         elif self.crossCount == 0:  # 只有竖排
             for i in range(self.verticalCount):
                 for j in range(self.verticalNum):
-                    cp = self.component, cp.startX = startX, cp.startY = startY
+                    cp = self.component
+                    cp.startX = startX
+                    cp.startY = startY
                     cp.direction = 1
                     cp.row = i
-                    cp.endX = round((startX + self.component.width) / UNIT)
-                    cp.endY = round((startY + self.component.length) / UNIT)
+                    cp.endX = startX + round((self.component.width) / UNIT)
+                    cp.endY = startY + round((self.component.length) / UNIT)
                     self.componentArray.append(cp)
                     startX += round((self.component.width + 0.006) / UNIT)
-                startX -= round((self.component.width + 0.006) * self.verticalnum / UNIT)
+                startX -= round(((self.component.width + 0.006) * self.verticalNum) / UNIT)
                 startY += round((self.component.length + 0.006) / UNIT)
-        elif self.verticalCount == 1 and self.crossCount == 1: # 竖一横一
+        elif self.verticalCount == 1 and self.crossCount == 1:  # 竖一横一
             for i in range(self.verticalNum):
-                cp = self.component, cp.startX = startX, cp.startY = startY
+                cp = self.component
+                cp.startX = startX
+                cp.startY = startY
                 cp.direction = 1
                 cp.row = 1
-                cp.endX = round((startX + self.component.width) / UNIT)
-                cp.endY = round((startY + self.component.length) / UNIT)
+                cp.endX = startX + round((self.component.width) / UNIT)
+                cp.endY = startY + round((self.component.length) / UNIT)
                 self.componentArray.append(cp)
                 startX += round((self.component.width + 0.006) / UNIT)
-            startX = round((startX + self.component.width) / UNIT)
-            startY = round((startY + self.component.width + 0.012) / UNIT)
+            startX = startX + round((self.component.width) / UNIT)
+            startY = startY + round((self.component.width + 0.012) / UNIT)
             for i in range(self.crossNum):
-                cp = self.component, cp.startY = startY
-                cp.startX = round((startX - self.component.length) / UNIT)
+                cp = self.component
+                cp.startY = startY
+                cp.startX = startX - round((self.component.length) / UNIT)
                 cp.row = 2
                 cp.direction = 2
                 cp.endX = startX
-                cp.endY = round((startY + self.component.width) / UNIT)
+                cp.endY = startY + round((self.component.width) / UNIT)
                 self.componentArray.append(cp)
                 startX -= round((self.component.length + 0.006) / UNIT)
-        else:#其他横竖情况
+        else:  # 其他横竖情况
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
-                    cp = self.component, cp.startX = startX, cp.startY = startY
+                    cp = self.component
+                    cp.startX = startX
+                    cp.startY = startY
                     cp.direction = 1
                     cp.row = i
-                    cp.endX = round((startX + self.component.width) / UNIT)
-                    cp.endY = round((startY + self.component.length) / UNIT)
+                    cp.endX = startX + round((self.component.width) / UNIT)
+                    cp.endY = startY + round((self.component.length) / UNIT)
                     self.componentArray.append(cp)
                     startX += round((self.component.width + 0.006) / UNIT)
-                startX -= round((self.component.width + 0.006) * self.verticalnum / UNIT)
+                startX -= round(((self.component.width + 0.006) * self.verticalNum) / UNIT)
                 startY += round((self.component.length + 0.006) / UNIT)
             startY += round((self.component.width + 0.006 + 0.012) / UNIT)
             for i in range(self.verticalNum):
-                cp = self.component, cp.startX = startX, cp.startY = startY
+                cp = self.component
+                cp.startX = startX
+                cp.startY = startY
                 cp.direction = 1
                 cp.row = self.verticalNum
-                cp.endX = round((startX + self.component.width) / UNIT)
-                cp.endY = round((startY + self.component.length) / UNIT)
+                cp.endX = startX + round((self.component.width) / UNIT)
+                cp.endY = startY + round((self.component.length) / UNIT)
                 self.componentArray.append(cp)
                 startX += round((self.component.width + 0.006) / UNIT)
+
             startX -= round((0.006) / UNIT)
             startY -= round((self.component.width - 0.012) / UNIT)
+
             for i in range(self.crossNum):
-                cp = self.component, cp.startY = startY
-                cp.startX = round((startX - self.component.length) / UNIT)
+                cp = self.component
+                cp.startY = startY
+                cp.startX = startX - round((self.component.length) / UNIT)
                 cp.row = self.verticalCount
                 cp.direction = 2
                 cp.endX = startX
-                cp.endY = round((startY + self.component.width) / UNIT)
+                cp.endY = startY + round((self.component.width) / UNIT)
                 self.componentArray.append(cp)
                 startX -= round((self.component.length + 0.006) / UNIT)
+        return self.componentArray
+
 
 
 
@@ -144,7 +160,7 @@ class Arrangement:
         #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
         #                                                 startX, startY, startX + 1.134, startY + 2.279, 1, i))
         #            startX += round((self.component.width + 0.006) / UNIT)
-        return self.componentArray
+        # return self.componentArray
 
     # def chooseLayout(self):
     #     if self.specification == "竖二" and self.type == "基墩":

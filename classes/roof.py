@@ -51,6 +51,8 @@ class Roof:
         elif lib == "img":
             img = Image.fromarray((tempArr * 255).astype(np.uint8))
             img.show()
+        else:
+            raise Exception("lib参数错误: ", lib)
         print("屋顶排布示意图绘制完成，耗时", time.time() - time1, "秒\n")
 
     def getShadowEdgeNodes(self, edgeNode, edgeNodeHeight):
@@ -121,24 +123,22 @@ class Roof:
         time1 = time.time()
         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-        def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_row, now_y, direct):  # 用于竖排放置方式的更新
+        def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_y, direct):  # 用于竖排放置方式的更新
             newRect = Component("tmp", INF, INF, INF, INF, INF, INF, mY - Len + 1, mX - Wid + 1, mY, mX, direct,
-                                now_row, round(PhotovoltaicPanelCrossMargin / UNIT),
+                                round(PhotovoltaicPanelCrossMargin / UNIT),
                                 round(PhotovoltaicPanelVerticalMargin / UNIT))  # 先假装是一个组件，方便排布
 
             def overlaps(rect1, rect2):
                 return not (
-                            rect1.endX < rect2.startX or rect1.endY < rect2.startY or rect2.endX < rect1.startX or rect2.endY < rect1.startY)
+                        rect1.endX < rect2.startX or rect1.endY < rect2.startY or rect2.endX < rect1.startX or rect2.endY < rect1.startY)
 
-            if not any(overlaps(existing_rect, newRect) for existing_rect in maxRects):
+            if not any(overlaps(existingRect, newRect) for existingRect in maxRects):
                 arrange.calculateComponentArray(newRect.startX, newRect.startY)
                 maxRects.extend(arrange.componentArray)
                 max_count += 1
-                if now_y != mY and now_y != -INF:
-                    now_row += 1
-                return max_count, now_row, mY, True
+                return max_count, mY, True
             else:
-                return max_count, now_row, now_y, False
+                return max_count, now_y, False
 
         def renewJ(y, x, maxRects):
             for r in maxRects:
@@ -150,20 +150,23 @@ class Roof:
         arrangements.sort(key=lambda x: (x.verticalCount, x.crossCount), reverse=True)
         maxCount = 0
         self.maxRects = []
-        for arrangement in arrangements:
-            component_length_units = round(arrangement.length / UNIT)
-            component_width_units = round(arrangement.width / UNIT)
+        for k in range(len(arrangements)):
+            print("正在计算第", k + 1, "/", len(arrangements), "个组件的最佳方案，当前时间为",
+                  time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            component_length_units = round(arrangements[k].length / UNIT)
+            component_width_units = round(arrangements[k].width / UNIT)
             # if component_length_units < component_width_units:  # 确保length大于width（不需要额外判断了）
             #     component_length_units, component_width_units = component_width_units, component_length_units
             direction, length, width = 1, component_length_units, component_width_units
-            i, nowRow, nowY = length - 1, 1, -INF
+            i, nowY = length - 1, -INF
+            if length > self.length or width > self.width:
+                continue
             while i < self.length:
                 j = width - 1
                 while j < self.width:
                     if self.canPlaceRectangle(i, j, length, width):
-                        maxCount, nowRow, nowY, addFlag = updateMaxRects(arrangement, i, j, length, width,
-                                                                         self.maxRects, maxCount, nowRow, nowY,
-                                                                         direction)
+                        maxCount, nowY, addFlag = updateMaxRects(arrangements[k], i, j, length, width, self.maxRects,
+                                                                 maxCount, nowY, direction)
                         # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
                         if addFlag:
                             j += width - 2
@@ -191,19 +194,20 @@ class Roof:
                 return False
         return True
 
-    def removeComponentsWithFalseFool(self):
-        time1 = time.time()
-        # 创建一个新的列表用于存储要保留的元素
-        updated_rects = []
-        for rect in self.maxRects:
-            if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
-                updated_rects.append(rect)
-        self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
+    # def removeComponentsWithFalseFool(self):
+    #     # 创建一个新的列表用于存储要保留的元素
+    #     updated_rects = []
+    #     for rect in self.maxRects:
+    #         if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
+    #             updated_rects.append(rect)
+    #     self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
 
     def renewRects2Array(self):
         time1 = time.time()
         for rect1 in self.maxRects:  # todo: 还需要考虑一下万一PhotovoltaicPanelBoardLength超过了start和end的范围的情况
             self.boolArray[rect1.startY:rect1.endY + 1, rect1.startX:rect1.endX + 1] = False
+            # 修边
+            rect1.marginRight, rect1.marginBottom, = PhotovoltaicPanelCrossMargin, PhotovoltaicPanelVerticalMargin
 
         for rect1 in self.maxRects:
             # 修边

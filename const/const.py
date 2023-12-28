@@ -1,8 +1,8 @@
 # 规定一些常量
-UNIT = 0.001  # 以米为单位
+UNIT = 0.01  # 以米为单位
 INF = 1000000000  # 无穷大
-roofBoardLength = 50  # 打印屋顶示意图时，额外屋顶边缘的宽度（单位是单元格）
-PhotovoltaicPanelBoardLength = 30  # 打印屋顶示意图时，额外屋顶边缘的宽度（单位是单元格）
+roofBoardLength = 5  # 打印屋顶示意图时，额外屋顶边缘的宽度（单位是单元格）
+PhotovoltaicPanelBoardLength = 3  # 打印屋顶示意图时，额外屋顶边缘的宽度（单位是单元格）
 
 # 地图中的元素（别删，之后可能会用到！！！）
 # Empty = 0  # 空地

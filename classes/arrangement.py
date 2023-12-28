@@ -47,7 +47,6 @@ class Arrangement:
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 2
-                cp.row = 1
                 cp.endX = startX + round((self.component.length) / UNIT)
                 cp.endY = startY + round((self.component.width) / UNIT)
                 self.componentArray.append(cp)
@@ -59,7 +58,6 @@ class Arrangement:
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
-                    cp.row = i
                     cp.endX = startX + round((self.component.width) / UNIT)
                     cp.endY = startY + round((self.component.length) / UNIT)
                     self.componentArray.append(cp)
@@ -72,7 +70,6 @@ class Arrangement:
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
-                cp.row = 1
                 cp.endX = startX + round((self.component.width) / UNIT)
                 cp.endY = startY + round((self.component.length) / UNIT)
                 self.componentArray.append(cp)
@@ -83,7 +80,6 @@ class Arrangement:
                 cp = self.component
                 cp.startY = startY
                 cp.startX = startX - round((self.component.length) / UNIT)
-                cp.row = 2
                 cp.direction = 2
                 cp.endX = startX
                 cp.endY = startY + round((self.component.width) / UNIT)
@@ -96,7 +92,6 @@ class Arrangement:
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
-                    cp.row = i
                     cp.endX = startX + round((self.component.width) / UNIT)
                     cp.endY = startY + round((self.component.length) / UNIT)
                     self.componentArray.append(cp)
@@ -109,7 +104,6 @@ class Arrangement:
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
-                cp.row = self.verticalNum
                 cp.endX = startX + round((self.component.width) / UNIT)
                 cp.endY = startY + round((self.component.length) / UNIT)
                 self.componentArray.append(cp)
@@ -122,7 +116,6 @@ class Arrangement:
                 cp = self.component
                 cp.startY = startY
                 cp.startX = startX - round((self.component.length) / UNIT)
-                cp.row = self.verticalCount
                 cp.direction = 2
                 cp.endX = startX
                 cp.endY = startY + round((self.component.width) / UNIT)
@@ -130,10 +123,7 @@ class Arrangement:
                 startX -= round((self.component.length + 0.006) / UNIT)
         return self.componentArray
 
-
-
-
-        #if self.verticalCount == 2 and self.crossCount == 0:  # 竖二
+        # if self.verticalCount == 2 and self.crossCount == 0:  # 竖二
         #    for i in range(2):
         #        for j in range(self.num):
         #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
@@ -141,7 +131,7 @@ class Arrangement:
         #            startX += round((self.component.width + 0.006) / UNIT)
         #    startX -= round((self.component.width + 0.006) * self.num / UNIT)
         #    startY += round((self.component.length + 0.012) / UNIT)
-        #if self.verticalCount == 4 and self.crossCount == 1:  # 竖四横一
+        # if self.verticalCount == 4 and self.crossCount == 1:  # 竖四横一
         #    for i in range(3):
         #        for j in range(self.num):
         #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
@@ -178,6 +168,19 @@ class Arrangement:
 
 def calculateVerticalWidth(verticalNum, componentWidth):
     return verticalNum * componentWidth + (verticalNum - 1) * PhotovoltaicPanelCrossMargin
+
+
+def calculateCrossWidth(crossNum, componentLength):
+    return crossNum * componentLength + (crossNum - 1) * PhotovoltaicPanelCrossMargin
+
+
+def screenArrangements(arrangementArray, roofWidth, roofLength, componentSpecification, arrangeType, windPressure):
+    # 通过输入的屋顶宽度、屋顶长度、组件类型、排布类型和风压，筛选出合适的排布
+    result = []
+    for arrangement in arrangementArray:
+        if arrangement.width <= roofWidth and arrangement.length <= roofLength and arrangement.component.specification == componentSpecification and arrangement.arrangeType == arrangeType and arrangement.maxWindPressure >= windPressure:
+            result.append(arrangement)
+    return result
 
 
 # component1 = Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35)  # 以米、瓦为单位
@@ -287,26 +290,24 @@ for i in range(tempLength):
                                             arrangements[i].verticalNum, j, arrangements[i].component.specification,
                                             arrangements[i].arrangeType, arrangements[i].maxWindPressure))
             arrangements[-1].crossPosition = INF  # 没有横排的时候，横排的位置是没有意义的
-    elif arrangements[i].verticalCount == 1 and arrangements[i].crossCount == 1:
-        for j in range(2, 31):
-            maxCrossNum = 0
-            while calculateVerticalWidth(j, arrangements[i].component.width) - maxCrossNum * arrangements[
-                i].component.length - (maxCrossNum - 1) * PhotovoltaicPanelCrossMargin > 0:
-                maxCrossNum += 1
-            arrangements.append(Arrangement(arrangements[i].verticalCount, arrangements[i].crossCount, j,
-                                            maxCrossNum, arrangements[i].component.specification,
-                                            arrangements[i].arrangeType, arrangements[i].maxWindPressure))
-            arrangements[-1].crossPosition = 1
     else:
-        for j in range(2, 31):
+        minVerticalNum = 2
+        while calculateVerticalWidth(minVerticalNum, arrangements[i].component.width) < arrangements[
+            i].component.length:
+            minVerticalNum += 1
+        for j in range(minVerticalNum, 31):
             maxCrossNum = 0
-            while calculateVerticalWidth(j, arrangements[i].component.width) - maxCrossNum * arrangements[
-                i].component.length - (maxCrossNum - 1) * PhotovoltaicPanelCrossMargin > 0:
+            while calculateVerticalWidth(j, arrangements[i].component.width) > \
+                    calculateCrossWidth(maxCrossNum, arrangements[i].component.length):
                 maxCrossNum += 1
+            maxCrossNum -= 1
             arrangements.append(Arrangement(arrangements[i].verticalCount, arrangements[i].crossCount, j,
                                             maxCrossNum, arrangements[i].component.specification,
                                             arrangements[i].arrangeType, arrangements[i].maxWindPressure))
-        arrangements[-1].crossPosition = arrangements[i].verticalCount - 1
+        if arrangements[i].verticalCount == 1:
+            arrangements[-1].crossPosition = 1
+        else:
+            arrangements[-1].crossPosition = arrangements[i].verticalCount - 1
 arrangements = arrangements[tempLength:]
 # print(len(arrangements))
 # print(arrangements)

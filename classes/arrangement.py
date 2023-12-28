@@ -43,7 +43,9 @@ class Arrangement:
         # 通过输入的startX, startY和Arrangement本就有的信息计算出组件的排布坐标，添加到self.componentArray里
         if self.verticalCount == 0:  # 只有横排布（横一）
             for i in range(self.crossNum):
-                cp = self.component
+                cp = Component(self.component.specification, self.component.width, self.component.length,
+                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                               self.component.maxThickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 2
@@ -54,7 +56,10 @@ class Arrangement:
         elif self.crossCount == 0:  # 只有竖排
             for i in range(self.verticalCount):
                 for j in range(self.verticalNum):
-                    cp = self.component
+                    cp = Component(self.component.specification, self.component.width, self.component.length,
+                                   self.component.minimumPower, self.component.maximumPower,
+                                   self.component.minThickness,
+                                   self.component.maxThickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -66,7 +71,9 @@ class Arrangement:
                 startY += round((self.component.length + 0.006) / UNIT)
         elif self.verticalCount == 1 and self.crossCount == 1:  # 竖一横一
             for i in range(self.verticalNum):
-                cp = self.component
+                cp = Component(self.component.specification, self.component.width, self.component.length,
+                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                               self.component.maxThickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -77,7 +84,9 @@ class Arrangement:
             startX = startX + round((self.component.width) / UNIT)
             startY = startY + round((self.component.width + 0.012) / UNIT)
             for i in range(self.crossNum):
-                cp = self.component
+                cp = Component(self.component.specification, self.component.width, self.component.length,
+                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                               self.component.maxThickness)
                 cp.startY = startY
                 cp.startX = startX - round((self.component.length) / UNIT)
                 cp.direction = 2
@@ -88,7 +97,9 @@ class Arrangement:
         else:  # 其他横竖情况
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
-                    cp = self.component
+                    cp = Component(self.component.specification, self.component.width, self.component.length,
+                                   self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                                   self.component.maxThickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -100,7 +111,9 @@ class Arrangement:
                 startY += round((self.component.length + 0.006) / UNIT)
             startY += round((self.component.width + 0.006 + 0.012) / UNIT)
             for i in range(self.verticalNum):
-                cp = self.component
+                cp = Component(self.component.specification, self.component.width, self.component.length,
+                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                               self.component.maxThickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -113,7 +126,9 @@ class Arrangement:
             startY -= round((self.component.width - 0.012) / UNIT)
 
             for i in range(self.crossNum):
-                cp = self.component
+                cp = Component(self.component.specification, self.component.width, self.component.length,
+                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
+                               self.component.maxThickness)
                 cp.startY = startY
                 cp.startX = startX - round((self.component.length) / UNIT)
                 cp.direction = 2

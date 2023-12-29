@@ -1,12 +1,13 @@
-from const.const import INF
+from const.const import INF, UNIT
 
 
 class Component:
     def __init__(self, specification, width, length, minimumPower, maximumPower, minThickness, maxThickness, statX=INF,
                  statY=INF, endX=INF, endY=INF, direction=INF, marginRight=INF, marginBottom=INF):
         self.specification = specification
-        self.width = width
-        self.length = length
+        # 将width和length转换成以UNIT为单位
+        self.width = round(width / UNIT)
+        self.length = round(length / UNIT)
         self.minimumPower = minimumPower
         self.maximumPower = maximumPower
         self.minThickness = minThickness

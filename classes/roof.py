@@ -6,7 +6,7 @@ from const.const import *
 from getData import dataDict
 from hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import tan, radians, cos, sin, sqrt
-from classes.component import Component
+from copy import deepcopy
 
 
 class Roof:
@@ -88,7 +88,7 @@ class Roof:
     def calculateShadow(self):
         self.boolArray = np.full((self.length, self.width), True)
         time1 = time.time()
-        print("正在计算阴影，当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        print("正在计算阴影，当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
         for eachObstacle in self.obstacles:
             allEdgeNodes = []
             for i in range(len(eachObstacle.edges)):
@@ -121,12 +121,19 @@ class Roof:
 
     def getBestOption(self, arrangements):
         time1 = time.time()
-        print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
         self.maxRects = []
         dp = np.zeros((self.length, self.width), dtype=int)
         choice = np.full((self.length, self.width), None, dtype=object)  # 存储选择的arrangement和位置信息
         minLength, minWidth = INF, INF
-        # arrangements.sort(key=lambda x: (x.value), reverse=True)
+
+        def overlaps(rect1, rect2):
+            r1EndX = rect1.startX + rect1.width - 1
+            r1EndY = rect1.startY + rect1.length - 1
+            r2EndX = rect2.startX + rect2.width - 1
+            r2EndY = rect2.startY + rect2.length - 1
+            return not (
+                    r1EndX < rect2.startX or r1EndY < rect2.startY or r2EndX < rect1.startX or r2EndY < rect1.startY)
 
         for arrangement in arrangements:
             minLength = min(minLength, arrangement.length)
@@ -142,20 +149,40 @@ class Roof:
                         newValue = dp[i - arrangement.length + 1, j - arrangement.width + 1] + arrangement.value
                         if newValue > dp[i, j]:
                             dp[i, j] = newValue
-                            choice[i, j] = arrangement  # 记录选择的arrangement和位置
-            print("正在计算第", i + 1, "/", self.length, "行，时间",
-                  time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        print("最大价值为", dp[self.length - 1, self.width - 1])
+                            # choice[i, j] = (str(choice[i - arrangement.length + 1, j - arrangement.width + 1]) + "+" +
+                            #                 str(arrangement.ID)) if choice[i - arrangement.length + 1, j - arrangement.
+                            # width + 1] is not None else arrangement.ID
+                            choice[i, j] = arrangement.ID
+            print("正在计算第", i + 1, "/", self.length, "行，时间", time.strftime("%m-%d %H:%M:%S", time.localtime()))
 
         # 回溯找出放置的arrangement和位置
         i, j = self.length - 1, self.width - 1
-        while i >= 0 and j >= 0 and choice[i, j] is not None:
-            arrangement = choice[i, j]
-            arrangement.calculateComponentArray(j - arrangement.width + 1,
-                                                i - arrangement.length + 1)
-            self.maxRects.extend(arrangement.componentArray)
-            i, j = i - arrangement.length, j - arrangement.width
-        print("最佳方案计算完成，耗时", time.time() - time1, "秒\n")
+        usedArrangements = []
+        arrangement = None
+        maxValue = 0
+        while i >= 0:
+            j = self.width - 1
+            while j >= 0:
+                if choice[i, j] is not None:
+                    for tempArrangement in arrangements:
+                        if tempArrangement.ID == choice[i, j]:
+                            arrangement = tempArrangement
+                            break
+                    if arrangement is not None and (len(usedArrangements) == 0 or any(not overlaps
+                        (arrangement, usedArrangement) for usedArrangement in usedArrangements)):
+                        choice[i - arrangement.length + 1:i + 1, j - arrangement.width + 1:j + 1] = None  # 非常重要！！！
+                        arrangement.calculateComponentArray(j - arrangement.width + 1, i - arrangement.length + 1)
+                        maxValue += arrangement.value
+                        self.maxRects.extend(arrangement.componentArray)
+                        tempArrangement = deepcopy(arrangement)
+                        tempArrangement.startY, tempArrangement.startX = i - arrangement.length + 1, j - arrangement.width + 1
+                        usedArrangements.append(tempArrangement)
+                        j -= arrangement.width
+                        arrangement = None
+                else:
+                    j -= 1
+            i -= 1
+        print("最佳方案计算耗时", time.time() - time1, "秒，最大价值为", maxValue, "铺设了", len(self.maxRects), "块组件\n")
 
     def canPlaceRectangle(self, i, j, length, width):
         # 前缀和数组优化
@@ -244,7 +271,7 @@ class Roof:
 # 能放就放的arrangement排布函数（留着备用！！！）
 #     def getBestOption(self, arrangements):
 #         time1 = time.time()
-#         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+#         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
 #
 #         def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_y, direct):  # 用于竖排放置方式的更新
 #             newRect = Component("tmp", INF, INF, INF, INF, INF, INF, mX - Wid + 1, mY - Len + 1, mX, mY, direct,
@@ -275,7 +302,7 @@ class Roof:
 #         self.maxRects = []
 #         for k in range(len(arrangements)):
 #             print("正在计算第", k + 1, "/", len(arrangements), "个组件的最佳方案，当前时间为",
-#                   time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+#                   time.strftime("%m-%d %H:%M:%S", time.localtime()))
 #             # if k == 29:
 #             #     break
 #             component_length_units = round(arrangements[k].length / UNIT)
@@ -306,7 +333,7 @@ class Roof:
 # 单个组件的排布函数（留着备用！！！）
 #     def getBestOption(self, component):
 #         time1 = time.time()
-#         print("正在计算最佳方案...当前时间为", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+#         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
 #         component_length_units = round(component.length / UNIT)
 #         component_width_units = round(component.width / UNIT)
 #         if component_length_units < component_width_units:  # 确保length大于width

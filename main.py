@@ -7,7 +7,7 @@ if __name__ == '__main__':
     roof = classes.roof.Roof(length=15, width=7.5, roofAngle=0, roofDirection=0, latitude=0.5)  # 输入的单位是米
     obstacle = classes.obstacle.Obstacle([[1, 1], [2, 2], [2, 1], [1, 2]], [1, 1, 1, 1], "烟囱")  # 输入的单位是米
     roof.addObstacle(obstacle)
-    screenedArrangements = screenArrangements(arrangements, roof.width, roof.length, "182-78", "膨胀常规", 1.2614)
+    screenedArrangements = screenArrangements(arrangements, roof.width, roof.length, "182-72", "膨胀常规", 0.9785)
 
     roof.calculateShadow()
 

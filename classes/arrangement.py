@@ -54,7 +54,7 @@ class Arrangement:
                 cp.endX = startX + self.component.length
                 cp.endY = startY + self.component.width
                 self.componentArray.append(cp)
-                startX += self.component.width + round(0.006 / UNIT)  # todo: 记得改成const内的值
+                startX += self.component.width + PhotovoltaicPanelCrossMargin  # 横横间隙
         elif self.crossCount == 0:  # 只有竖排
             for i in range(self.verticalCount):
                 for j in range(self.verticalNum):
@@ -68,9 +68,9 @@ class Arrangement:
                     cp.endX = startX + self.component.width
                     cp.endY = startY + self.component.length
                     self.componentArray.append(cp)
-                    startX += self.component.width + round(0.006 / UNIT)  # todo: 记得改成const内的值
-                startX -= self.component.width - round((0.006 * self.verticalNum) / UNIT)  # todo: 记得改成const内的值
-                startY += self.component.length + round(0.006 / UNIT)  # todo: 记得改成const内的值
+                    startX += self.component.width + PhotovoltaicPanelCrossMargin
+                startX -= (self.component.width + PhotovoltaicPanelCrossMargin) * self.verticalNum
+                startY += self.component.length + PhotovoltaicPanelVerticalMargin
         elif self.verticalCount == 1 and self.crossCount == 1:  # 竖一横一
             for i in range(self.verticalNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
@@ -82,9 +82,9 @@ class Arrangement:
                 cp.endX = startX + self.component.width
                 cp.endY = startY + self.component.length
                 self.componentArray.append(cp)
-                startX += self.component.width + round(0.006 / UNIT)
+                startX += self.component.width + PhotovoltaicPanelCrossMargin
             startX = startX + self.component.width
-            startY = startY + self.component.width + round(0.012 / UNIT)
+            startY = startY + self.component.width + PhotovoltaicPanelVerticalDiffMargin
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
                                self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
@@ -95,7 +95,7 @@ class Arrangement:
                 cp.endX = startX
                 cp.endY = startY + self.component.width
                 self.componentArray.append(cp)
-                startX -= self.component.length - round(0.006 / UNIT)
+                startX -= self.component.length + PhotovoltaicPanelCrossMargin
         else:  # 其他横竖情况
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
@@ -106,14 +106,14 @@ class Arrangement:
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
-                    cp.endX = startX + self.component.width
-                    cp.endY = startY + self.component.length
+                    cp.endX = (startX + self.component.width)
+                    cp.endY = (startY + self.component.length)
                     self.componentArray.append(cp)
-                    startX += self.component.width + round(0.006 / UNIT)
-                startX -= self.component.width - round((0.006 * self.verticalNum) / UNIT)
-                startY += self.component.length + round(0.006 / UNIT)
-            startY += self.component.width + round((0.006 + 0.012) / UNIT)  # todo: 检查一下？
-            for i in range(self.verticalNum):
+                    startX += (self.component.width + PhotovoltaicPanelCrossMargin)
+                startX -= (self.component.width + PhotovoltaicPanelCrossMargin) * self.verticalNum
+                startY += (self.component.length + PhotovoltaicPanelVerticalMargin)
+            startY += (self.component.width + PhotovoltaicPanelVerticalDiffMargin * 2 - PhotovoltaicPanelVerticalMargin)
+            for i in range(self.verticalNum):  # 最后一排
                 cp = Component(self.component.specification, self.component.width, self.component.length,
                                self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
                                self.component.maxThickness)
@@ -123,10 +123,10 @@ class Arrangement:
                 cp.endX = startX + self.component.width
                 cp.endY = startY + self.component.length
                 self.componentArray.append(cp)
-                startX += self.component.width + round(0.006 / UNIT)
+                startX += (self.component.width + PhotovoltaicPanelCrossMargin)
 
-            startX -= round((0.006) / UNIT)
-            startY -= self.component.width + round(0.012 / UNIT)  # todo: 检查一下？
+            startX -= PhotovoltaicPanelCrossMargin
+            startY -= (self.component.width - PhotovoltaicPanelVerticalDiffMargin)
 
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
@@ -138,7 +138,7 @@ class Arrangement:
                 cp.endX = startX
                 cp.endY = startY + self.component.width
                 self.componentArray.append(cp)
-                startX -= self.component.length - round(0.006 / UNIT)
+                startX -= self.component.length + PhotovoltaicPanelCrossMargin
         return self.componentArray
 
         # if self.verticalCount == 2 and self.crossCount == 0:  # 竖二

@@ -2,9 +2,14 @@ from classes.component import Component, components
 from const.const import UNIT, INF, PhotovoltaicPanelCrossMargin, PhotovoltaicPanelVerticalMargin, \
     PhotovoltaicPanelVerticalDiffMargin
 
+ID = 0
+
 
 class Arrangement:
     def __init__(self, verticalCount, crossCount, verticalNum, crossNum, component, arrangeType, maxWindPressure):
+        global ID
+        self.ID = ID  # 排布的ID，主要用于判断排布是否相同
+        ID += 1
         # self.specification = specification  # 排布的类型
         self.verticalCount = verticalCount  # 竖排布数量
         self.crossCount = crossCount  # 横排布数量
@@ -26,13 +31,21 @@ class Arrangement:
             self.length = verticalCount * self.component.length + (verticalCount - 1) * (
                     PhotovoltaicPanelVerticalMargin + PhotovoltaicPanelVerticalDiffMargin)
         elif verticalCount == 0:
-            self.width = crossCount * self.component.length + (crossNum - 1) * PhotovoltaicPanelCrossMargin
+            self.width = crossNum * self.component.length + (crossNum - 1) * PhotovoltaicPanelCrossMargin
             self.length = self.component.width
+        elif crossCount == 1 and verticalCount == 1:
+            self.width = verticalNum * self.component.width + (verticalNum - 1) * PhotovoltaicPanelCrossMargin
+            self.length = self.component.length + self.component.width + PhotovoltaicPanelVerticalMargin + PhotovoltaicPanelVerticalDiffMargin  # 计算长度和crossCount=0时一样就行
         else:
-            self.width = max(crossCount * self.component.length + (crossCount - 1) * PhotovoltaicPanelCrossMargin,
+            # if (crossNum != INF or verticalNum != INF) and crossNum * self.component.length + (
+            #         crossNum - 1) * PhotovoltaicPanelCrossMargin > verticalNum * self.component.width + (
+            #         verticalNum - 1) * PhotovoltaicPanelCrossMargin:
+            #     print("长的方向是横向！！！")  # 测试代码
+            #     exit(0)
+            self.width = max(crossNum * self.component.length + (crossNum - 1) * PhotovoltaicPanelCrossMargin,
                              verticalNum * self.component.width + (verticalNum - 1) * PhotovoltaicPanelCrossMargin)
-            self.length = verticalCount * self.component.length + crossCount * self.component.length + (
-                    verticalCount + crossCount - 1) * (
+            self.length = verticalCount * self.component.length + crossCount * self.component.width + (
+                    verticalCount - 3) * PhotovoltaicPanelVerticalMargin + 2 * (
                                   PhotovoltaicPanelVerticalMargin + PhotovoltaicPanelVerticalDiffMargin)  # 计算长度和crossCount=0时一样就行
 
         self.crossPosition = INF  # 横排组件的位置
@@ -344,21 +357,20 @@ for i in range(tempLength):
                 tempArrangements[-1].crossPosition = 1
             else:
                 tempArrangements[-1].crossPosition = tempArrangements[i].verticalCount - 1
-tempArrangements = tempArrangements[tempLength:]
+arrangements = tempArrangements[tempLength:]
 # 去重
-tempArrangements.sort(key=lambda x: (x.verticalCount, x.verticalNum, x.crossCount, x.crossNum), reverse=True)
-arrangements = [tempArrangements[0]]
-for i in range(1, len(tempArrangements)):
-    if arrangements[-1].verticalCount == tempArrangements[i].verticalCount and arrangements[-1].verticalNum == \
-            tempArrangements[i].verticalNum and arrangements[-1].crossCount == tempArrangements[i].crossCount and \
-            arrangements[-1].crossNum == tempArrangements[i].crossNum:
-        continue
-    else:
-        arrangements.append(tempArrangements[i])
-        # if arrangements[-1].component.specification == "182-72" and arrangements[-1].arrangeType == "膨胀常规" \
-        #         and arrangements[-1].maxWindPressure == 0.9785:
-        #     print(arrangements[-1].verticalCount, arrangements[-1].verticalNum, arrangements[-1].crossCount,
-        #           arrangements[-1].crossNum, "hhh")
+# tempArrangements.sort(key=lambda x: (x.verticalCount, x.verticalNum, x.crossCount, x.crossNum), reverse=True)
+# arrangements = [tempArrangements[0]]
+# for i in range(1, len(tempArrangements)):
+#     if arrangements[-1].verticalCount == tempArrangements[i].verticalCount and arrangements[-1].verticalNum == \
+#             tempArrangements[i].verticalNum and arrangements[-1].crossCount == tempArrangements[i].crossCount and \
+#             arrangements[-1].crossNum == tempArrangements[i].crossNum and arrangements[-1].component.specification == \
+#             tempArrangements[i].component.specification and arrangements[-1].arrangeType == tempArrangements[
+#         i].arrangeType and abs(arrangements[-1].maxWindPressure - tempArrangements[i].maxWindPressure) < 0.00001:
+#         print("重复！！！")
+#         continue
+#     else:
+#         arrangements.append(tempArrangements[i])
 
 # i = 0
 # while i < len(tempArrangements) - 1:

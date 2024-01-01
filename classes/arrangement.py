@@ -96,8 +96,8 @@ class Arrangement:
                 cp.endY = startY + self.component.length
                 self.componentArray.append(cp)
                 startX += self.component.width + PhotovoltaicPanelCrossMargin
-            startX = startX + self.component.width
-            startY = startY + self.component.width + PhotovoltaicPanelVerticalDiffMargin
+            startX = startX - PhotovoltaicPanelCrossMargin
+            startY = startY + self.component.length + PhotovoltaicPanelVerticalDiffMargin
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
                                self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
@@ -325,21 +325,21 @@ tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀抬高", 0.
 
 tempLength = len(tempArrangements)
 for i in range(tempLength):
-    if tempArrangements[i].crossCount == 0:
+    if tempArrangements[i].crossCount == 0:   # 只有竖排
         for j in range(2, 31):
             tempArrangements.append(Arrangement(tempArrangements[i].verticalCount, 0, j, tempArrangements[i].crossNum,
                                                 tempArrangements[i].component.specification,
                                                 tempArrangements[i].arrangeType,
                                                 tempArrangements[i].maxWindPressure))
             tempArrangements[-1].crossPosition = INF  # 没有竖排的时候，横排的位置是没有意义的
-    elif tempArrangements[i].verticalCount == 0:
+    elif tempArrangements[i].verticalCount == 0:  # 只有横排
         for j in range(1, 16):
             tempArrangements.append(Arrangement(0, tempArrangements[i].crossCount, tempArrangements[i].verticalNum, j,
                                                 tempArrangements[i].component.specification,
                                                 tempArrangements[i].arrangeType,
                                                 tempArrangements[i].maxWindPressure))
             tempArrangements[-1].crossPosition = INF  # 没有横排的时候，横排的位置是没有意义的
-    else:
+    else:  # 横竖都有
         minVerticalNum = 2
         while calculateVerticalWidth(minVerticalNum, tempArrangements[i].component.width) <= tempArrangements[
             i].component.length:

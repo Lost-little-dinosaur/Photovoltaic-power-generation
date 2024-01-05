@@ -24,8 +24,7 @@ class Arrangement:
         self.componentArray = []  # 组合排布中组件的详细信息
         self.arrangeType = arrangeType  # 排布的类型：基墩，膨胀常规，膨胀抬高
         self.maxWindPressure = maxWindPressure  # 风压
-        self.value = self.component.maximumPower * (
-                self.verticalCount * self.verticalNum + self.crossCount * self.crossNum)  # todo: 以组件功率最大值计算每个arrangement的价值
+        self.value = self.component.power * (self.verticalCount * self.verticalNum + self.crossCount * self.crossNum)
         if crossCount == 0:
             self.width = verticalNum * self.component.width + (verticalNum - 1) * PhotovoltaicPanelCrossMargin
             self.length = verticalCount * self.component.length + (verticalCount - 1) * (
@@ -59,8 +58,7 @@ class Arrangement:
         if self.verticalCount == 0:  # 只有横排布（横一）
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
-                               self.component.maxThickness)
+                               self.component.power, self.component.thickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 2
@@ -72,9 +70,7 @@ class Arrangement:
             for i in range(self.verticalCount):
                 for j in range(self.verticalNum):
                     cp = Component(self.component.specification, self.component.width, self.component.length,
-                                   self.component.minimumPower, self.component.maximumPower,
-                                   self.component.minThickness,
-                                   self.component.maxThickness)
+                                   self.component.power, self.component.thickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -87,8 +83,7 @@ class Arrangement:
         elif self.verticalCount == 1 and self.crossCount == 1:  # 竖一横一
             for i in range(self.verticalNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
-                               self.component.maxThickness)
+                               self.component.power, self.component.thickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -100,8 +95,7 @@ class Arrangement:
             startY = startY + self.component.length + PhotovoltaicPanelVerticalDiffMargin
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
-                               self.component.maxThickness)
+                               self.component.power, self.component.thickness)
                 cp.startY = startY
                 cp.startX = startX - self.component.length
                 cp.direction = 2
@@ -113,9 +107,7 @@ class Arrangement:
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
                     cp = Component(self.component.specification, self.component.width, self.component.length,
-                                   self.component.minimumPower, self.component.maximumPower,
-                                   self.component.minThickness,
-                                   self.component.maxThickness)
+                                   self.component.power,self.component.thickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -128,8 +120,7 @@ class Arrangement:
             startY += (self.component.width + PhotovoltaicPanelVerticalDiffMargin * 2 - PhotovoltaicPanelVerticalMargin)
             for i in range(self.verticalNum):  # 最后一排
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
-                               self.component.maxThickness)
+                               self.component.power, self.component.thickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -143,8 +134,7 @@ class Arrangement:
 
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.component.minimumPower, self.component.maximumPower, self.component.minThickness,
-                               self.component.maxThickness)
+                               self.component.power, self.component.thickness)
                 cp.startY = startY
                 cp.startX = startX - self.component.length
                 cp.direction = 2
@@ -205,159 +195,165 @@ def calculateCrossWidth(crossNum, componentLength):
     return crossNum * componentLength + (crossNum - 1) * PhotovoltaicPanelCrossMargin
 
 
-def screenArrangements(arrangementArray, roofWidth, roofLength, componentSpecification, arrangeType, windPressure):
+def screenArrangements(roofWidth, roofLength, componentSpecification, arrangeType, windPressure):
+    tempArrangements = []
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(1, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
+
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(1, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "210-60", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "210-60", "基墩", 0.9785))
+
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
+
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "182-72", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "182-72", "基墩", 0.9785))
+
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(1, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
+
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
+
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(1, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
+
+    tempArrangements.append(Arrangement(0, 1, INF, INF, "182-78", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "基墩", 0.9785))
+    tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "基墩", 0.9785))
+
+    tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
+    tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
+
+    tempLength = len(tempArrangements)
+    for i in range(tempLength):
+        if tempArrangements[i].crossCount == 0:  # 只有竖排
+            for j in range(2, 31):
+                tempArrangements.append(
+                    Arrangement(tempArrangements[i].verticalCount, 0, j, tempArrangements[i].crossNum,
+                                tempArrangements[i].component.specification,
+                                tempArrangements[i].arrangeType,
+                                tempArrangements[i].maxWindPressure))
+                tempArrangements[-1].crossPosition = INF  # 没有竖排的时候，横排的位置是没有意义的
+        elif tempArrangements[i].verticalCount == 0:  # 只有横排
+            for j in range(1, 16):
+                tempArrangements.append(
+                    Arrangement(0, tempArrangements[i].crossCount, tempArrangements[i].verticalNum, j,
+                                tempArrangements[i].component.specification,
+                                tempArrangements[i].arrangeType,
+                                tempArrangements[i].maxWindPressure))
+                tempArrangements[-1].crossPosition = INF  # 没有横排的时候，横排的位置是没有意义的
+        else:  # 横竖都有
+            minVerticalNum = 2
+            while calculateVerticalWidth(minVerticalNum, tempArrangements[i].component.width) <= tempArrangements[
+                i].component.length:
+                minVerticalNum += 1
+            for j in range(minVerticalNum, 31):
+                maxCrossNum = 0
+                while calculateVerticalWidth(j, tempArrangements[i].component.width) > \
+                        calculateCrossWidth(maxCrossNum, tempArrangements[i].component.length):
+                    maxCrossNum += 1
+                maxCrossNum -= 1
+                tempArrangements.append(
+                    Arrangement(tempArrangements[i].verticalCount, tempArrangements[i].crossCount, j,
+                                maxCrossNum, tempArrangements[i].component.specification,
+                                tempArrangements[i].arrangeType, tempArrangements[i].maxWindPressure))
+                if tempArrangements[i].verticalCount == 1:
+                    tempArrangements[-1].crossPosition = 1
+                else:
+                    tempArrangements[-1].crossPosition = tempArrangements[i].verticalCount - 1
+    arrangementArray =  tempArrangements[tempLength:]
     # 通过输入的屋顶宽度、屋顶长度、组件类型、排布类型和风压，筛选出合适的排布
     result = []
     for arrangement in arrangementArray:
         if arrangement.width <= roofWidth and arrangement.length <= roofLength and arrangement.component.specification == componentSpecification and arrangement.arrangeType == arrangeType and arrangement.maxWindPressure + 0.00001 >= windPressure:
             result.append(arrangement)
-        # if arrangement.width <= roofWidth and arrangement.length <= roofLength:
-        #     if arrangement.component.specification == componentSpecification:
-        #         if arrangement.arrangeType == arrangeType:
-        #             if arrangement.maxWindPressure + 0.00001 >= windPressure:
-        #                 result.append(arrangement)
-        #             else:
-        #                 print("风压不符合，要求风压为", windPressure, "实际风压为", arrangement.maxWindPressure)
-        #         else:
-        #             print("排布类型不符合，要求排布类型为", arrangeType, "实际排布类型为", arrangement.arrangeType)
-        #     else:
-        #         print("组件类型不符合，要求组件类型为", componentSpecification, "实际组件类型为",
-        #               arrangement.component.specification)
-        # else:
-        #     print("排布尺寸不符合，要求排布尺寸为", roofWidth, roofLength, "实际排布尺寸为", arrangement.width,
-        #           arrangement.length)
 
     return result
 
-
+# 组件排布的规格
 # component1 = Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35)  # 以米、瓦为单位
 # component2 = Component("182-78", 1.134, 2.465, 580, 600, 0.30, 0.35)  # 以米、瓦为单位
 # component3 = Component("210-60", 1.303, 2.172, 595, 605, 0.33, 0.35)  # 以米、瓦为单位
 # component4 = Component("210-66", 1.303, 2.384, 650, 665, 0.33, 0.35)  # 以米、瓦为单位
 # components = [component1, component2, component3, component4]
-# 组件排布的规格
+
 # verticalCount, crossCount, verticalNum, crossNum, component, arrangeType, maxWindPressure
-tempArrangements = []
-tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(1, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀常规", 1.2614))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀常规", 1.2614))
 
-tempArrangements.append(Arrangement(1, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(1, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(0, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "210-60", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "210-60", "膨胀常规", 0.9785))
+# 分布判断
+# if arrangement.width <= roofWidth and arrangement.length <= roofLength:
+#     if arrangement.component.specification == componentSpecification:
+#         if arrangement.arrangeType == arrangeType:
+#             if arrangement.maxWindPressure + 0.00001 >= windPressure:
+#                 result.append(arrangement)
+#             else:
+#                 print("风压不符合，要求风压为", windPressure, "实际风压为", arrangement.maxWindPressure)
+#         else:
+#             print("排布类型不符合，要求排布类型为", arrangeType, "实际排布类型为", arrangement.arrangeType)
+#     else:
+#         print("组件类型不符合，要求组件类型为", componentSpecification, "实际组件类型为",
+#               arrangement.component.specification)
+# else:
+#     print("排布尺寸不符合，要求排布尺寸为", roofWidth, roofLength, "实际排布尺寸为", arrangement.width,
+#           arrangement.length)
 
-tempArrangements.append(Arrangement(0, 1, INF, INF, "210-60", "基墩", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "基墩", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "基墩", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "基墩", 0.9785))
-tempArrangements.append(Arrangement(1, 0, INF, INF, "210-60", "基墩", 0.9785))
-
-tempArrangements.append(Arrangement(2, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "210-60", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "210-60", "膨胀抬高", 0.9785))
-
-tempArrangements.append(Arrangement(0, 1, INF, INF, "182-72", "基墩", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "基墩", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "基墩", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "基墩", 0.9785))
-tempArrangements.append(Arrangement(1, 0, INF, INF, "182-72", "基墩", 0.9785))
-
-tempArrangements.append(Arrangement(1, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(1, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(0, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "182-72", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "182-72", "膨胀常规", 0.9785))
-
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "182-72", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "182-72", "膨胀抬高", 0.9785))
-
-tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(1, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(0, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀常规", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀常规", 0.9785))
-
-tempArrangements.append(Arrangement(0, 1, INF, INF, "182-78", "基墩", 0.9785))
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "基墩", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "基墩", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "基墩", 0.9785))
-tempArrangements.append(Arrangement(1, 0, INF, INF, "182-78", "基墩", 0.9785))
-
-tempArrangements.append(Arrangement(2, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(2, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(3, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(4, 1, INF, INF, "182-78", "膨胀抬高", 0.9785))
-tempArrangements.append(Arrangement(5, 0, INF, INF, "182-78", "膨胀抬高", 0.9785))
-
-tempLength = len(tempArrangements)
-for i in range(tempLength):
-    if tempArrangements[i].crossCount == 0:   # 只有竖排
-        for j in range(2, 31):
-            tempArrangements.append(Arrangement(tempArrangements[i].verticalCount, 0, j, tempArrangements[i].crossNum,
-                                                tempArrangements[i].component.specification,
-                                                tempArrangements[i].arrangeType,
-                                                tempArrangements[i].maxWindPressure))
-            tempArrangements[-1].crossPosition = INF  # 没有竖排的时候，横排的位置是没有意义的
-    elif tempArrangements[i].verticalCount == 0:  # 只有横排
-        for j in range(1, 16):
-            tempArrangements.append(Arrangement(0, tempArrangements[i].crossCount, tempArrangements[i].verticalNum, j,
-                                                tempArrangements[i].component.specification,
-                                                tempArrangements[i].arrangeType,
-                                                tempArrangements[i].maxWindPressure))
-            tempArrangements[-1].crossPosition = INF  # 没有横排的时候，横排的位置是没有意义的
-    else:  # 横竖都有
-        minVerticalNum = 2
-        while calculateVerticalWidth(minVerticalNum, tempArrangements[i].component.width) <= tempArrangements[
-            i].component.length:
-            minVerticalNum += 1
-        for j in range(minVerticalNum, 31):
-            maxCrossNum = 0
-            while calculateVerticalWidth(j, tempArrangements[i].component.width) > \
-                    calculateCrossWidth(maxCrossNum, tempArrangements[i].component.length):
-                maxCrossNum += 1
-            maxCrossNum -= 1
-            tempArrangements.append(Arrangement(tempArrangements[i].verticalCount, tempArrangements[i].crossCount, j,
-                                                maxCrossNum, tempArrangements[i].component.specification,
-                                                tempArrangements[i].arrangeType, tempArrangements[i].maxWindPressure))
-            if tempArrangements[i].verticalCount == 1:
-                tempArrangements[-1].crossPosition = 1
-            else:
-                tempArrangements[-1].crossPosition = tempArrangements[i].verticalCount - 1
-arrangements = tempArrangements[tempLength:]
 # 去重
 # tempArrangements.sort(key=lambda x: (x.verticalCount, x.verticalNum, x.crossCount, x.crossNum), reverse=True)
 # arrangements = [tempArrangements[0]]

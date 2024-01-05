@@ -10,10 +10,11 @@ from copy import deepcopy
 
 
 class Roof:
-    def __init__(self, length, width, roofAngle, roofDirection, latitude):  # 输入的length和width是以米为单位的
+    def __init__(self, length, width, roofAngle, roofDirection, latitude, northExtend=0, southExtend=0, eastExtend=0,
+                 westExtend=0):  # 输入的length和width是以米为单位的
         time1 = time.time()
-        self.length = round(length / UNIT)
-        self.width = round(width / UNIT)
+        self.length = round((length + southExtend + northExtend) / UNIT)
+        self.width = round((width + eastExtend + westExtend) / UNIT)
         self.roofAngle = roofAngle
         self.roofDirection = roofDirection
         self.latitude = latitude
@@ -182,7 +183,8 @@ class Roof:
                 else:
                     j -= 1
             i -= 1
-        print("最佳方案计算耗时", time.time() - time1, "秒，最大价值为", maxValue, "铺设了", len(self.maxRects), "块组件\n")
+        print("最佳方案计算耗时", time.time() - time1, "秒，最大价值为", maxValue, "铺设了", len(self.maxRects),
+              "块组件\n")
 
     def canPlaceRectangle(self, i, j, length, width):
         # 前缀和数组优化

@@ -3,9 +3,10 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from const.const import *
-from getData import dataDict
-from hullCalculation import getConvexHull, isPointInsideConvexHull
+from data.getData import dataDict
+from data.hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import tan, radians, cos, sin, sqrt
+from classes.component import Component
 from copy import deepcopy
 
 
@@ -123,68 +124,54 @@ class Roof:
     def getBestOption(self, arrangements):
         time1 = time.time()
         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
+
+        def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_y, direct):  # 用于竖排放置方式的更新
+            newRect = Component("tmp", INF, INF, INF, INF, mX - Wid + 1, mY - Len + 1, mX, mY, direct,
+                                PhotovoltaicPanelCrossMargin, PhotovoltaicPanelVerticalMargin)  # 先假装是一个组件，方便排布
+
+            def overlaps(rect1, rect2):
+                return not (
+                        rect1.endX < rect2.startX or rect1.endY < rect2.startY or rect2.endX < rect1.startX or rect2.endY < rect1.startY)
+
+            if not any(overlaps(existingRect, newRect) for existingRect in maxRects):
+                arrange.calculateComponentArray(newRect.startX, newRect.startY)
+                maxRects.extend(arrange.componentArray)
+                max_count += len(arrange.componentArray)
+                return max_count, mY, True
+            else:
+                return max_count, now_y, False
+
+        def renewJ(y, x, maxRects):
+            for r in maxRects:
+                if r.startY <= y <= r.endY and r.startX <= x <= r.endX:
+                    return r.endX - x + 1
+            return 1
+
+        # 先对arrangements按不同关键字排序，verticalCount从大到小，crossCount从大到小
+        arrangements.sort(key=lambda x: x.value, reverse=True)
+        maxCount = 0
         self.maxRects = []
-        dp = np.zeros((self.length, self.width), dtype=int)
-        choice = np.full((self.length, self.width), None, dtype=object)  # 存储选择的arrangement和位置信息
-        minLength, minWidth = INF, INF
-
-        def overlaps(rect1, rect2):
-            r1EndX = rect1.startX + rect1.width - 1
-            r1EndY = rect1.startY + rect1.length - 1
-            r2EndX = rect2.startX + rect2.width - 1
-            r2EndY = rect2.startY + rect2.length - 1
-            return not (
-                    r1EndX < rect2.startX or r1EndY < rect2.startY or r2EndX < rect1.startX or r2EndY < rect1.startY)
-
-        for arrangement in arrangements:
-            minLength = min(minLength, arrangement.length)
-            minWidth = min(minWidth, arrangement.width)
-        # 给左上角的dp数组赋值为0
-        minLength, minWidth = minLength - 1, minWidth - 1
-        dp[0:minLength, :] = 0
-        for i in range(minLength, self.length):
-            for j in range(minWidth, self.width):
-                for arrangement in arrangements:
-                    if i - arrangement.length + 1 >= 0 and j - arrangement.width + 1 >= 0 and \
-                            self.canPlaceRectangle(i, j, arrangement.length, arrangement.width):
-                        newValue = dp[i - arrangement.length + 1, j - arrangement.width + 1] + arrangement.value
-                        if newValue > dp[i, j]:
-                            dp[i, j] = newValue
-                            # choice[i, j] = (str(choice[i - arrangement.length + 1, j - arrangement.width + 1]) + "+" +
-                            #                 str(arrangement.ID)) if choice[i - arrangement.length + 1, j - arrangement.
-                            # width + 1] is not None else arrangement.ID
-                            choice[i, j] = arrangement.ID
-            print("正在计算第", i + 1, "/", self.length, "行，时间", time.strftime("%m-%d %H:%M:%S", time.localtime()))
-
-        # 回溯找出放置的arrangement和位置
-        i, j = self.length - 1, self.width - 1
-        usedArrangements = []
-        arrangement = None
-        maxValue = 0
-        while i >= 0:
-            j = self.width - 1
-            while j >= 0:
-                if choice[i, j] is not None:
-                    for tempArrangement in arrangements:
-                        if tempArrangement.ID == choice[i, j]:
-                            arrangement = tempArrangement
-                            break
-                    if arrangement is not None and (len(usedArrangements) == 0 or any(not overlaps
-                        (arrangement, usedArrangement) for usedArrangement in usedArrangements)):
-                        choice[i - arrangement.length + 1:i + 1, j - arrangement.width + 1:j + 1] = None  # 非常重要！！！
-                        arrangement.calculateComponentArray(j - arrangement.width + 1, i - arrangement.length + 1)
-                        maxValue += arrangement.value
-                        self.maxRects.extend(arrangement.componentArray)
-                        tempArrangement = deepcopy(arrangement)
-                        tempArrangement.startY, tempArrangement.startX = i - arrangement.length + 1, j - arrangement.width + 1
-                        usedArrangements.append(tempArrangement)
-                        j -= arrangement.width
-                        arrangement = None
-                else:
-                    j -= 1
-            i -= 1
-        print("最佳方案计算耗时", time.time() - time1, "秒，最大价值为", maxValue, "铺设了", len(self.maxRects),
-              "块组件\n")
+        for k in range(len(arrangements)):
+            print("正在计算第", k + 1, "/", len(arrangements), "个组件的最佳方案，当前时间为",
+                  time.strftime("%m-%d %H:%M:%S", time.localtime()))
+            direction, length, width = 1, arrangements[k].length, arrangements[k].width
+            i, nowY = length - 1, -INF
+            if length > self.length or width > self.width:
+                continue
+            while i < self.length:
+                j = width - 1
+                while j < self.width:
+                    if self.canPlaceRectangle(i, j, length, width):
+                        maxCount, nowY, addFlag = updateMaxRects(arrangements[k], i, j, length, width, self.maxRects,
+                                                                 maxCount, nowY, direction)
+                        # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
+                        if addFlag:
+                            j += width - 2
+                    j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
+                i += 1
+        print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount, "块光伏板" + "，当前精度为",
+              UNIT, "米\n")
+        return self.maxRects
 
     def canPlaceRectangle(self, i, j, length, width):
         # 前缀和数组优化
@@ -203,13 +190,14 @@ class Roof:
                 return False
         return True
 
-    # def removeComponentsWithFalseFool(self):
-    #     # 创建一个新的列表用于存储要保留的元素
-    #     updated_rects = []
-    #     for rect in self.maxRects:
-    #         if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
-    #             updated_rects.append(rect)
-    #     self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
+    def removeComponentsWithFalseFool(self):
+        # 创建一个新的列表用于存储要保留的元素
+        updated_rects = []
+        for rect in self.maxRects:
+            if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
+                updated_rects.append(rect)
+        print(f"删除了{len(self.maxRects) - len(updated_rects)}个组件，剩余{len(updated_rects)}个组件")
+        self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
 
     def renewRects2Array(self):
         time1 = time.time()
@@ -270,7 +258,74 @@ class Roof:
 
         print("已更新show_array和bool_array，耗时", time.time() - time1, "秒\n")
 
-# 能放就放的arrangement排布函数（留着备用！！！）
+# dp排布的arrangement排布函数（留着备用！！！）
+#     def getBestOption(self, arrangements):
+#         time1 = time.time()
+#         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
+#         self.maxRects = []
+#         dp = np.zeros((self.length, self.width), dtype=int)
+#         choice = np.full((self.length, self.width), None, dtype=object)  # 存储选择的arrangement和位置信息
+#         overlapCache = {}  # 用于缓存overlaps函数的结果
+#         minLength, minWidth = INF, INF
+#
+#         # def overlaps(rect1, rect2):
+#         #     r1EndX = rect1.startX + rect1.width - 1
+#         #     r1EndY = rect1.startY + rect1.length - 1
+#         #     r2EndX = rect2.startX + rect2.width - 1
+#         #     r2EndY = rect2.startY + rect2.length - 1
+#         #     return not (
+#         #             r1EndX < rect2.startX or r1EndY < rect2.startY or r2EndX < rect1.startX or r2EndY < rect1.startY)
+#
+#         for arrangement in arrangements:
+#             minLength = min(minLength, arrangement.length)
+#             minWidth = min(minWidth, arrangement.width)
+#         # 给左上角的dp数组赋值为0
+#         minLength, minWidth = minLength - 1, minWidth - 1
+#         dp[0:minLength, :] = 0
+#         for i in range(minLength, self.length):
+#             for j in range(minWidth, self.width):
+#                 for arrangement in arrangements:
+#                     if i - arrangement.length + 1 >= 0 and j - arrangement.width + 1 >= 0 and \
+#                             self.canPlaceRectangle(i, j, arrangement.length, arrangement.width):
+#                         newValue = dp[i - arrangement.length + 1, j - arrangement.width + 1] + arrangement.value
+#                         if newValue > dp[i, j]:
+#                             dp[i, j] = newValue
+#                             # choice[i, j] = (str(choice[i - arrangement.length + 1, j - arrangement.width + 1]) + "+" +
+#                             #                 str(arrangement.ID)) if choice[i - arrangement.length + 1, j - arrangement.
+#                             # width + 1] is not None else arrangement.ID
+#                             choice[i, j] = arrangement.ID
+#             print("正在计算第", i + 1, "/", self.length, "行，时间", time.strftime("%m-%d %H:%M:%S", time.localtime()))
+#
+#         # 回溯找出放置的arrangement和位置
+#         i, j = self.length - 1, self.width - 1
+#         usedArrangements = []
+#         arrangement = None
+#         maxValue = 0
+#         while i >= 0:
+#             j = self.width - 1
+#             while j >= 0:
+#                 if choice[i, j] is not None:
+#                     for tempArrangement in arrangements:
+#                         if tempArrangement.ID == choice[i, j]:
+#                             arrangement = tempArrangement  # 如果要加overlaps判断，记得在这里给startXY赋值
+#                             break
+#                     if arrangement is not None:  # 暂时不加overlaps判断，要加的话记得在前面给startXY赋值（and (len(usedArrangements) == 0 or any(not overlaps(arrangement, usedArrangement) for usedArrangement in usedArrangements))）
+#                         choice[i - arrangement.length + 1:i + 1, j - arrangement.width + 1:j + 1] = None  # 非常重要！！！
+#                         arrangement.calculateComponentArray(j - arrangement.width + 1, i - arrangement.length + 1)
+#                         maxValue += arrangement.value
+#                         self.maxRects.extend(arrangement.componentArray)
+#                         tempArrangement = deepcopy(arrangement)
+#                         tempArrangement.startY, tempArrangement.startX = i - arrangement.length + 1, j - arrangement.width + 1
+#                         usedArrangements.append(tempArrangement)
+#                         j -= arrangement.width
+#                         arrangement = None
+#                 else:
+#                     j -= 1
+#             i -= 1
+#         print("最佳方案计算耗时", time.time() - time1, "秒，最大价值为", maxValue, "铺设了", len(self.maxRects),
+#               "块组件\n")
+
+# 贪心排布的arrangement排布函数（留着备用！！！）
 #     def getBestOption(self, arrangements):
 #         time1 = time.time()
 #         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))

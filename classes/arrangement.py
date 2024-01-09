@@ -107,7 +107,7 @@ class Arrangement:
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
                     cp = Component(self.component.specification, self.component.width, self.component.length,
-                                   self.component.power,self.component.thickness)
+                                   self.component.power, self.component.thickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -319,7 +319,7 @@ def screenArrangements(roofWidth, roofLength, componentSpecification, arrangeTyp
                     tempArrangements[-1].crossPosition = 1
                 else:
                     tempArrangements[-1].crossPosition = tempArrangements[i].verticalCount - 1
-    arrangementArray =  tempArrangements[tempLength:]
+    arrangementArray = tempArrangements[tempLength:]
     # 通过输入的屋顶宽度、屋顶长度、组件类型、排布类型和风压，筛选出合适的排布
     result = []
     for arrangement in arrangementArray:
@@ -327,6 +327,7 @@ def screenArrangements(roofWidth, roofLength, componentSpecification, arrangeTyp
             result.append(arrangement)
 
     return result
+
 
 # 组件排布的规格
 # component1 = Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35)  # 以米、瓦为单位
@@ -378,3 +379,8 @@ def screenArrangements(roofWidth, roofLength, componentSpecification, arrangeTyp
 #         i += 1
 # print(len(tempArrangements))
 # print(tempArrangements)
+
+if __name__ == '__main__':
+    tempArrangement = Arrangement(5, 0, 6, INF, "182-72", "膨胀常规", 0.9785)
+    tempArrangement.calculateComponentArray(12, 70)
+    print(tempArrangement.componentArray)

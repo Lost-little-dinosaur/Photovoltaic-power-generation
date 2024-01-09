@@ -1,0 +1,39 @@
+{
+  "Roof": {
+    "length": 15,
+    "width": 7.5,
+    "roofAngle": 0,
+    "roofDirection": 0,
+    "latitude": 0.5
+  },
+    "Obstacles": [
+        {
+        "points": [[1, 1], [2, 2], [2, 1], [1, 2]],
+        "heights": [1, 1, 1, 1],
+        "name": "烟囱"
+        }
+    ],
+  "Components": [{
+      "specification": "182-72",
+      "power": 550,
+      "thickness": 0.35
+    }, {
+      "specification": "182-78",
+      "power": 600,
+      "thickness": 0.35
+    }, {
+      "specification": "210-60",
+      "power": 605,
+      "thickness": 0.35
+    }, {
+      "specification": "210-66",
+      "power": 665,
+      "thickness": 0.35
+    }
+  ],
+  "SelectedArrangement": {
+    "specification": "182-72",
+    "arrangeType": "膨胀常规",
+    "windPressure": 0.9785
+  }
+}

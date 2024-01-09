@@ -3,8 +3,8 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from const.const import *
-from getData import dataDict
-from hullCalculation import getConvexHull, isPointInsideConvexHull
+from data.getData import dataDict
+from data.hullCalculation import getConvexHull, isPointInsideConvexHull
 from math import tan, radians, cos, sin, sqrt
 from copy import deepcopy
 
@@ -126,15 +126,16 @@ class Roof:
         self.maxRects = []
         dp = np.zeros((self.length, self.width), dtype=int)
         choice = np.full((self.length, self.width), None, dtype=object)  # 存储选择的arrangement和位置信息
+        overlapCache = {}  # 用于缓存overlaps函数的结果
         minLength, minWidth = INF, INF
 
-        def overlaps(rect1, rect2):
-            r1EndX = rect1.startX + rect1.width - 1
-            r1EndY = rect1.startY + rect1.length - 1
-            r2EndX = rect2.startX + rect2.width - 1
-            r2EndY = rect2.startY + rect2.length - 1
-            return not (
-                    r1EndX < rect2.startX or r1EndY < rect2.startY or r2EndX < rect1.startX or r2EndY < rect1.startY)
+        # def overlaps(rect1, rect2):
+        #     r1EndX = rect1.startX + rect1.width - 1
+        #     r1EndY = rect1.startY + rect1.length - 1
+        #     r2EndX = rect2.startX + rect2.width - 1
+        #     r2EndY = rect2.startY + rect2.length - 1
+        #     return not (
+        #             r1EndX < rect2.startX or r1EndY < rect2.startY or r2EndX < rect1.startX or r2EndY < rect1.startY)
 
         for arrangement in arrangements:
             minLength = min(minLength, arrangement.length)
@@ -167,10 +168,9 @@ class Roof:
                 if choice[i, j] is not None:
                     for tempArrangement in arrangements:
                         if tempArrangement.ID == choice[i, j]:
-                            arrangement = tempArrangement
+                            arrangement = tempArrangement  # 如果要加overlaps判断，记得在这里给startXY赋值
                             break
-                    if arrangement is not None and (len(usedArrangements) == 0 or any(not overlaps
-                        (arrangement, usedArrangement) for usedArrangement in usedArrangements)):
+                    if arrangement is not None:  # 暂时不加overlaps判断，要加的话记得在前面给startXY赋值（and (len(usedArrangements) == 0 or any(not overlaps(arrangement, usedArrangement) for usedArrangement in usedArrangements))）
                         choice[i - arrangement.length + 1:i + 1, j - arrangement.width + 1:j + 1] = None  # 非常重要！！！
                         arrangement.calculateComponentArray(j - arrangement.width + 1, i - arrangement.length + 1)
                         maxValue += arrangement.value
@@ -203,13 +203,13 @@ class Roof:
                 return False
         return True
 
-    # def removeComponentsWithFalseFool(self):
-    #     # 创建一个新的列表用于存储要保留的元素
-    #     updated_rects = []
-    #     for rect in self.maxRects:
-    #         if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
-    #             updated_rects.append(rect)
-    #     self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
+    def removeComponentsWithFalseFool(self):
+        # 创建一个新的列表用于存储要保留的元素
+        updated_rects = []
+        for rect in self.maxRects:
+            if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
+                updated_rects.append(rect)
+        self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
 
     def renewRects2Array(self):
         time1 = time.time()

@@ -125,21 +125,23 @@ class Roof:
         time1 = time.time()
         print("正在计算最佳方案...当前时间为", time.strftime("%m-%d %H:%M:%S", time.localtime()))
 
-        def updateMaxRects(arrange, mY, mX, Len, Wid, maxRects, max_count, now_y, direct):  # 用于竖排放置方式的更新
-            newRect = Component("tmp", INF, INF, INF, INF, mX - Wid + 1, mY - Len + 1, mX, mY, direct,
-                                PhotovoltaicPanelCrossMargin, PhotovoltaicPanelVerticalMargin)  # 先假装是一个组件，方便排布
-
+        def updateMaxRects(arrange, sY, sX, maxRects, max_count):  # 用于竖排放置方式的更新
             def overlaps(rect1, rect2):
                 return not (
                         rect1.endX < rect2.startX or rect1.endY < rect2.startY or rect2.endX < rect1.startX or rect2.endY < rect1.startY)
 
-            if not any(overlaps(existingRect, newRect) for existingRect in maxRects):
-                arrange.calculateComponentArray(newRect.startX, newRect.startY)
-                maxRects.extend(arrange.componentArray)
-                max_count += len(arrange.componentArray)
-                return max_count, mY, True
-            else:
-                return max_count, now_y, False
+            for eachRect in arrange.relativePositionArray:
+                # 判断是否和maxRects中的矩形重叠
+                startX, startY = eachRect[0]
+                endX, endY = eachRect[1]
+                absoluteEndX, absoluteEndY = sX + endX, sY + endY
+                newRect = Component("tmp", INF, INF, INF, INF, sX + startX, sY + startY, absoluteEndX, absoluteEndY,
+                                    1, 0, 0)
+                if any(overlaps(existingRect, newRect) for existingRect in maxRects):
+                    return max_count, False
+            arrange.calculateComponentArray(sX, sY)
+            maxRects.extend(arrange.componentArray)
+            return max_count + len(arrange.componentArray), True
 
         def renewJ(y, x, maxRects):
             for r in maxRects:
@@ -151,30 +153,56 @@ class Roof:
         arrangements.sort(key=lambda x: x.value, reverse=True)
         maxCount = 0
         self.maxRects = []
+        breakFlag = False
         for k in range(len(arrangements)):
             print("正在计算第", k + 1, "/", len(arrangements), "个组件的最佳方案，当前时间为",
                   time.strftime("%m-%d %H:%M:%S", time.localtime()))
-            direction, length, width = 1, arrangements[k].length, arrangements[k].width
-            i, nowY = length - 1, -INF
-            if length > self.length or width > self.width:
-                continue
+            i = 0
             while i < self.length:
-                j = width - 1
+                j = 0
                 while j < self.width:
-                    if self.canPlaceRectangle(i, j, length, width):
-                        maxCount, nowY, addFlag = updateMaxRects(arrangements[k], i, j, length, width, self.maxRects,
-                                                                 maxCount, nowY, direction)
+                    if self.canPlaceArrangement(i, j, arrangements[k]):
+                        maxCount, addFlag = updateMaxRects(arrangements[k], i, j, self.maxRects, maxCount)
                         # 更新光伏板之间的间距（在最后利用maxRects一起更新bool数组和show数组）
                         if addFlag:
-                            j += width - 2
-                    j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
+                            # j += width - 2
+                            breakFlag = True
+                            break
+                    # j += renewJ(i - length + 1, j - width + 1, self.maxRects)  # 快速更新j（非常重要！！！）
+                    j += 1
+                if breakFlag:
+                    break
                 i += 1
         print("最佳方案计算完成，耗时", time.time() - time1, "秒，最多可以放置", maxCount, "块光伏板" + "，当前精度为",
               UNIT, "米\n")
         return self.maxRects
 
-    def canPlaceRectangle(self, i, j, length, width):
+    def canPlaceArrangement(self, i, j, arrangement):
         # 前缀和数组优化
+        for eachRect in arrangement.relativePositionArray:
+            # 调整坐标，考虑矩形边界
+            startX, startY = eachRect[0]
+            endX, endY = eachRect[1]
+            absoluteEndX, absoluteEndY = i + endX, j + endY
+
+            if self.width > absoluteEndX and self.length > absoluteEndY:
+                # 计算矩形区域的前缀和
+                total = self.boolArraySum[absoluteEndY][absoluteEndX]
+                if startX > 0:
+                    total -= self.boolArraySum[absoluteEndY][i + startX - 1]
+                if startY > 0:
+                    total -= self.boolArraySum[j + startY - 1][absoluteEndX]
+                if startX > 0 and startY > 0:
+                    total += self.boolArraySum[j + startY - 1][i + startX - 1]
+
+                # 检查矩形区域是否满足条件
+                if total != (endX - startX + 1) * (endY - startY + 1):
+                    return False
+            else:
+                return False
+        return True
+
+    def canPlaceComponent(self, i, j, length, width):
         if i > length - 1 and j > width - 1:
             if self.boolArraySum[i, j] - self.boolArraySum[i - length, j] - self.boolArraySum[i, j - width] + \
                     self.boolArraySum[i - length, j - width] != length * width:
@@ -192,12 +220,12 @@ class Roof:
 
     def removeComponentsWithFalseFool(self):
         # 创建一个新的列表用于存储要保留的元素
-        updated_rects = []
+        updatedRects = []
         for rect in self.maxRects:
-            if self.canPlaceRectangle(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
-                updated_rects.append(rect)
-        print(f"删除了{len(self.maxRects) - len(updated_rects)}个组件，剩余{len(updated_rects)}个组件")
-        self.maxRects = updated_rects  # 更新 maxRects 列表为新列表
+            if self.canPlaceComponent(rect.endY, rect.endX, rect.endY - rect.startY + 1, rect.endX - rect.startX + 1):
+                updatedRects.append(rect)
+        print(f"删除了{len(self.maxRects) - len(updatedRects)}个组件，剩余{len(updatedRects)}个组件")
+        self.maxRects = updatedRects  # 更新 maxRects 列表为新列表
 
     def renewRects2Array(self):
         time1 = time.time()

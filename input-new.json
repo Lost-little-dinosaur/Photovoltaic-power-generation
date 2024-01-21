@@ -1,0 +1,77 @@
+{
+  "Roof": [//屋面信息
+      {
+        "category": "平屋顶",//屋面类型
+        "shape": "矩形",//屋面形状
+        "length/A": 7700, // A边
+        "width/B": 9100, // B边
+        "topLeftRelativePosition": [0,0], // 左上角相对于整个模型的位置
+        "OverhangingEave": false, // 挑檐
+        "FloorNumber": 2,//房屋层数
+        "Height": 3000,//房屋高度
+        "Surface": "现浇板",//屋面类型
+        "Thickness": 110,//屋面厚度
+        "Location":{
+          "Province":"河北",//省
+          "City": "沧州",//市
+          "Region": "新华",//区
+          "longitude": 113.4,//经度
+          "latitude": 33.5,//维度
+          "Orientation": "南偏东",
+          "AzimuthAngle": 17, // 偏移角度
+          "DistanceToGridConnection": 2000 //距并网点距离
+        },
+        "ExtendableOrientation":["南","东","西"], // 可探出方向
+        "MaintenanceChannelOnSouth": false, // 是否预留运维通道
+        "ParapetWall": false, // 女儿墙
+        "ParapetHeight": -1 //女儿墙高度
+    },
+    {
+      // 如果是复杂屋顶就用采用多个屋顶拼接
+    }
+  ],
+  "Component":{//组件信息
+    "specification": "182-78",//组件类型
+    "power": 595,//功率
+    "thickness": 0.35 //厚度
+  },
+  "ArrangeType": "膨胀螺栓",
+  "HeavySnow": false,//是否是雪大区域
+  "VoltageLevel": "three-phase",//并网电压等级
+  "Guest":{//用户信息
+    "Name":"1234",//用户姓名
+    "Telephone":""//用户电话
+  },
+  "WindPressure":"低压",//风压系数
+  "SnowPressure":"低压",//雪压系数
+  "WindAndSnowPressure":"低压",//风雪压系数
+  "Obstacles": [//障碍物信息
+    {
+      "ID":"烟囱1",
+      "type":"烟囱", //类型
+        "isRound": false,//是否是圆形
+      "DetailInformation":{
+        "width": 20,//
+        "diameter": 20,//直径
+        "height": 20,//高度
+        "DistanceFromA": 500,//距A边距离
+        "DistanceFromB": 500,//距B边距离
+        "Adjustable": false,//是否可调整
+        "AdjustedHeight": -1 //调整高度
+      }
+    },
+    {
+      "ID":"热水器1",
+      "type":"热水器",
+      "isRound": false,
+      "DetailInformation":{
+        "width": 20,
+        "diameter": 20,
+        "height": 20,
+        "DistanceFromA": 500,
+        "DistanceFromB": 500,
+        "Adjustable": false
+      }
+    }
+    ]
+}

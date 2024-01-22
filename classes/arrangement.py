@@ -91,8 +91,8 @@ class Arrangement:
             for i in range(self.verticalCount):
                 for j in range(self.verticalNum):
                     cp = Component(self.component.specification, self.component.width, self.component.length,
-                                   self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                                   self.crossshortsidesize, self.component.power, self.component.thickness)
+                                   self.component.verticalspacing, self.component.verticalshortsidesize, self.component.crossspacing,
+                                   self.component.crossshortsidesize, self.component.power, self.component.thickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -105,8 +105,9 @@ class Arrangement:
         elif self.verticalCount == 1 and self.crossCount == 1:  # 竖一横一
             for i in range(self.verticalNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                               self.crossshortsidesize, self.component.power, self.component.thickness)
+                               self.component.verticalspacing, self.component.verticalshortsidesize,
+                               self.component.crossspacing,
+                               self.component.crossshortsidesize, self.component.power, self.component.thickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -118,8 +119,9 @@ class Arrangement:
             startY = startY + self.component.length + PhotovoltaicPanelVerticalDiffMargin
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                               self.crossshortsidesize, self.component.power, self.component.thickness)
+                               self.component.verticalspacing, self.component.verticalshortsidesize,
+                               self.component.crossspacing,
+                               self.component.crossshortsidesize, self.component.power, self.component.thickness)
                 cp.startY = startY
                 cp.startX = startX - self.component.length
                 cp.direction = 2
@@ -131,8 +133,9 @@ class Arrangement:
             for i in range(self.verticalCount - 1):
                 for j in range(self.verticalNum):
                     cp = Component(self.component.specification, self.component.width, self.component.length,
-                                   self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                                   self.crossshortsidesize, self.component.power, self.component.thickness)
+                                   self.component.verticalspacing, self.component.verticalshortsidesize,
+                                   self.component.crossspacing,
+                                   self.component.crossshortsidesize, self.component.power, self.component.thickness)
                     cp.startX = startX
                     cp.startY = startY
                     cp.direction = 1
@@ -145,8 +148,9 @@ class Arrangement:
             startY += (self.component.width + PhotovoltaicPanelVerticalDiffMargin * 2 - PhotovoltaicPanelVerticalMargin)
             for i in range(self.verticalNum):  # 最后一排
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                               self.crossshortsidesize, self.component.power, self.component.thickness)
+                               self.component.verticalspacing, self.component.verticalshortsidesize,
+                               self.component.crossspacing,
+                               self.component.crossshortsidesize, self.component.power, self.component.thickness)
                 cp.startX = startX
                 cp.startY = startY
                 cp.direction = 1
@@ -160,8 +164,9 @@ class Arrangement:
 
             for i in range(self.crossNum):
                 cp = Component(self.component.specification, self.component.width, self.component.length,
-                               self.verticalspacing, self.verticalshortsidesize, self.crossspacing,
-                               self.crossshortsidesize, self.component.power, self.component.thickness)
+                               self.component.verticalspacing, self.component.verticalshortsidesize,
+                               self.component.crossspacing,
+                               self.component.crossshortsidesize, self.component.power, self.component.thickness)
                 cp.startY = startY
                 cp.startX = startX - self.component.length
                 cp.direction = 2
@@ -184,7 +189,7 @@ class Arrangement:
 
         elif self.crossCount == 0:  # 只有竖排
             for i in range(self.verticalCount):
-                x = self.component.verticalshortsidesize
+                x += self.component.verticalshortsidesize
                 crossarray.append(x)
                 x += self.component.verticalspacing
                 crossarray.append(x)
@@ -211,12 +216,54 @@ class Arrangement:
             crossarray.append(x)
             x += self.component.crossshortsidesize + PhotovoltaicPanelVerticalDiffMargin
             for i in range(self.verticalCount - 1):
-                x = self.component.verticalshortsidesize
+                x += self.component.verticalshortsidesize
                 crossarray.append(x)
                 x += self.component.verticalspacing
                 crossarray.append(x)
                 x += self.component.verticalshortsidesize + PhotovoltaicPanelVerticalMargin
         return crossarray
+
+        # if self.verticalCount == 2 and self.crossCount == 0:  # 竖二
+        #    for i in range(2):
+        #        for j in range(self.num):
+        #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
+        #                                                 startX, startY, startX + 1.134, startY + 2.279, 1, i))
+        #            startX += round((self.component.width + 0.006) / UNIT)
+        #    startX -= round((self.component.width + 0.006) * self.num / UNIT)
+        #    startY += round((self.component.length + 0.012) / UNIT)
+        # if self.verticalCount == 4 and self.crossCount == 1:  # 竖四横一
+        #    for i in range(3):
+        #        for j in range(self.num):
+        #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
+        #                                                 startX, startY, startX + 1.134, startY + 2.279, 1, i))
+        #            # startX = startX + self.component.width + 0.006
+        #            startX += round((self.component.width + 0.006) / UNIT)
+        #    startX -= round((self.component.width + 0.006) * self.num / UNIT)
+        #    startY += round((self.component.length + 0.012) / UNIT)
+        #    for j in range(3):
+        #        self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
+        #                                             startX, startY, startX + 2.279, startY + 1.134, 2, 4))
+        #        startX += round((self.component.length + 0.006) / UNIT)
+        #    startX -= round((self.component.length + 0.006) * 3 / UNIT)
+        #    for i in range(3):
+        #        for j in range(self.num):
+        #            self.componentArray.append(Component("182-72", 1.134, 2.279, 535, 550, 0.30, 0.35,
+        #                                                 startX, startY, startX + 1.134, startY + 2.279, 1, i))
+        #            startX += round((self.component.width + 0.006) / UNIT)
+        # return self.componentArray
+
+    # def chooseLayout(self):
+    #     if self.specification == "竖二" and self.type == "基墩":
+    #         array_x = [107, 1707, 3307]
+    #         array_y = [459, 1859, 2706, 4135]
+    #
+    #     elif self.specification == "竖四横一" and self.type == "基墩":
+    #         array_x = [417, 2417, 4417, 6417, 6834]
+    #         array_y = [458, 1858, 2725, 4143, 5016, 6428, 6849, 8007, 8465, 9865]
+    #     else:
+    #         layout = "Default Layout"
+    #
+    #     return array_x, array_y
 
 
 def calculateVerticalWidth(verticalNum, componentWidth):
@@ -380,7 +427,7 @@ def screenArrangements(roofWidth, roofLength, componentSpecification, arrangeTyp
 # print(len(tempArrangements))
 # print(tempArrangements)
 
-# if __name__ == '__main__':
-#     tempArrangement = Arrangement(5, 0, 6, INF, "182-72", "膨胀常规", 0.9785)
-#     tempArrangement.calculateComponentArray(12, 70)
-#     print(tempArrangement.componentArray)
+if __name__ == '__main__':
+    tempArrangement = Arrangement(5, 0, 6, INF, "182-72", "膨胀常规", 0.9785)
+    print(tempArrangement.calculate_cross_position())
+

@@ -35,6 +35,6 @@ def assignComponentParameters(parameterDict):
 component1 = Component("182-72", 1.134, 2.279, 1.400, 0.439, 1.108, 0.013)  # 以米、瓦为单位
 component2 = Component("182-78", 1.134, 2.465, 1.500, 0.4825, 1.108, 0.013)  # 以米、瓦为单位
 component3 = Component("210-60", 1.303, 2.172, 1.400, 0.386, 1.277, 0.013)  # 以米、瓦为单位
-# component4 = Component("210-66", 1.303, 2.384, 1.400, 0.492)  # 以米、瓦为单位
-components = [component1, component2, component3]
+component4 = Component("210-66", 1.303, 2.384, 1.400, 0.492, 0, 0)  # 以米、瓦为单位
+components = [component1, component2, component3, component4]
 

@@ -1,77 +1,95 @@
 {
-  "Roof": [//屋面信息
+  "roof": [//屋面信息
       {
         "category": "平屋顶",//屋面类型
-        "shape": "矩形",//屋面形状
-        "length/A": 7700, // A边
-        "width/B": 9100, // B边
+        "length": 7700,
+        "width": 9100,
+        "height": 3000,//房屋高度
         "topLeftRelativePosition": [0,0], // 左上角相对于整个模型的位置
-        "OverhangingEave": false, // 挑檐
-        "FloorNumber": 2,//房屋层数
-        "Height": 3000,//房屋高度
-        "Surface": "现浇板",//屋面类型
-        "Thickness": 110,//屋面厚度
-        "Location":{
-          "Province":"河北",//省
-          "City": "沧州",//市
-          "Region": "新华",//区
+        "overhangingEave": false, // 挑檐
+        "surface": "现浇板",//屋面类型
+        "location":{
+          "province":"河北",//省
+          "city": "沧州",//市
+          "region": "新华",//区
           "longitude": 113.4,//经度
           "latitude": 33.5,//维度
-          "Orientation": "南偏东",
-          "AzimuthAngle": 17, // 偏移角度
-          "DistanceToGridConnection": 2000 //距并网点距离
+          "orientation": "南偏东",
+          "azimuthAngle": 17, // 偏移角度
+          "distanceToGridConnection": 2000 //距并网点距离
         },
-        "ExtendableOrientation":["南","东","西"], // 可探出方向
-        "MaintenanceChannelOnSouth": false, // 是否预留运维通道
-        "ParapetWall": false, // 女儿墙
-        "ParapetHeight": -1 //女儿墙高度
+        "extendableOrientation":["南","东","西"], // 可探出方向
+        "maintenanceChannelOnSouth": false, // 是否预留运维通道
+        "parapetHeight": -1 //女儿墙高度
     },
     {
       // 如果是复杂屋顶就用采用多个屋顶拼接
     }
   ],
-  "Component":{//组件信息
+  "component":{//组件信息
     "specification": "182-78",//组件类型
     "power": 595,//功率
     "thickness": 0.35 //厚度
   },
-  "ArrangeType": "膨胀螺栓",
-  "HeavySnow": false,//是否是雪大区域
-  "VoltageLevel": "three-phase",//并网电压等级
-  "Guest":{//用户信息
-    "Name":"1234",//用户姓名
-    "Telephone":""//用户电话
+  "arrangeType": "膨胀螺栓",
+  "heavySnow": false,//是否是雪大区域
+  "voltageLevel": 3,//并网电压等级
+  "guest":{//用户信息
+    "name":"1234",//用户姓名
+    "phone":""//用户电话
   },
-  "WindPressure":"低压",//风压系数
-  "SnowPressure":"低压",//雪压系数
-  "WindAndSnowPressure":"低压",//风雪压系数
-  "Obstacles": [//障碍物信息
+  "windPressure":"低压",//风压系数
+  "snowPressure":"低压",//雪压系数
+  "windAndSnowPressure":"低压",//风雪压系数
+  "obstacles": [//障碍物信息
     {
-      "ID":"烟囱1",
+      "id":"烟囱1",
       "type":"烟囱", //类型
-        "isRound": false,//是否是圆形
-      "DetailInformation":{
+      "isRound": true,//是否是圆形
+      "detailInformation":{
         "width": 20,//
         "diameter": 20,//直径
         "height": 20,//高度
-        "DistanceFromA": 500,//距A边距离
-        "DistanceFromB": 500,//距B边距离
-        "Adjustable": false,//是否可调整
-        "AdjustedHeight": -1 //调整高度
+        "centerPosition": [100, 200],//圆心相对于整个模型的位置
+        "adjustedHeight": -1 //调整高度
       }
     },
     {
-      "ID":"热水器1",
+      "id":"热水器1",
       "type":"热水器",
       "isRound": false,
-      "DetailInformation":{
-        "width": 20,
-        "diameter": 20,
+      "detailInformation":{
+        "width": 2,
+        "length": 10,
         "height": 20,
-        "DistanceFromA": 500,
-        "DistanceFromB": 500,
-        "Adjustable": false
+        "upLeftPosition": [500, 300],//左上角相对于整个模型的位置
+        "adjustedHeight": -1
       }
     }
-    ]
+    ],
+  "scene": [
+    {
+      "id": "树1",
+      "type": "树",
+      "isRound": true,
+      "detailInformation": {
+          "centerPosition": [100, 200],
+          "diameter": 5,
+          "height": 10,
+          "adjustedHeight": -1
+      }
+    },
+    {
+      "id": "屋顶1",
+      "type": "屋顶",
+      "isRound": false,
+      "detailInformation": {
+        "upLeftPosition": [-500, -300],
+        "width": 20,
+        "length": 20,
+        "height": 20,
+        "adjustedHeight": -1
+      }
+    }
+  ]
 }
